@@ -142,3 +142,12 @@
   @apply border-indigo-500/50 bg-indigo-500/5 !important;
   box-shadow: 0 0 30px rgba(99, 102, 241, 0.3) !important;
 }
+
+.modal-header-footer-tint {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.03));
+}
+
+.dark .modal-header-footer-tint {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15));
+}
+
