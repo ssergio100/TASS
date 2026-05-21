@@ -35,6 +35,7 @@ const props = defineProps({
   customClass: { type: String, default: '' },
   animate: { type: Boolean, default: true },
   hideHeader: { type: Boolean, default: false },
+  smallHeader: { type: Boolean, default: false },
   // Centralização de Botões
   okText: { type: String, default: '' },
   cancelText: { type: String, default: '' },
@@ -144,7 +145,8 @@ const { position, onMouseDown } = useModalDrag();
       <template v-else>
         <!-- Header -->
         <header 
-          class="flex items-center justify-between p-6 pb-4 border-b border-app-border-light cursor-grab active:cursor-grabbing select-none modal-header-footer-tint"
+          class="flex items-center justify-between border-b border-app-border-light cursor-grab active:cursor-grabbing select-none modal-header-footer-tint"
+          :class="smallHeader ? 'px-6 py-4' : 'p-6 pb-4'"
           :style="{ backgroundColor: `rgba(var(--app-bg-raw), var(--app-modal-header-opacity))` }"
           @mousedown="onMouseDown"
         >
@@ -152,21 +154,31 @@ const { position, onMouseDown } = useModalDrag();
             <div class="flex items-center gap-3">
               <div 
                 v-if="icon" 
-                class="p-2.5 rounded-2xl text-white shadow-lg"
+                class="text-white shadow-lg"
+                :class="smallHeader ? 'p-2 rounded-xl' : 'p-2.5 rounded-2xl'"
                 :style="{ 
                   backgroundColor: iconBgColor || '#6366f1', 
                   boxShadow: iconBgColor ? `0 4px 12px -2px ${iconBgColor}44` : '0 4px 12px -2px rgba(99, 102, 241, 0.3)' 
                 }"
               >
-                <component :is="icon" class="w-5 h-5" />
+                <component :is="icon" :class="smallHeader ? 'w-4 h-4' : 'w-5 h-5'" />
               </div>
               <div v-else class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
               
               <div>
-                <h2 :class="icon ? 'text-2xl font-black text-app-main tracking-tighter leading-none' : 'text-sm font-black text-app-main uppercase tracking-tighter'">
+                <h2 :class="[
+                  smallHeader 
+                    ? 'text-sm font-black text-app-main uppercase tracking-tighter leading-none' 
+                    : (icon ? 'text-2xl font-black text-app-main tracking-tighter leading-none' : 'text-sm font-black text-app-main uppercase tracking-tighter')
+                ]">
                   {{ title }}
                 </h2>
-                <span v-if="subtitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ subtitle }}</span>
+                <span 
+                  v-if="subtitle" 
+                  :class="smallHeader ? 'text-[9px] text-app-muted font-bold uppercase tracking-widest mt-1 block' : 'text-[10px] font-bold text-slate-400 uppercase tracking-widest'"
+                >
+                  {{ subtitle }}
+                </span>
               </div>
             </div>
           </slot>

@@ -48,6 +48,7 @@ const handleCloseModal = () => {
     v-if="isOpen"
     maxWidth="max-w-lg"
     layout="standard"
+    smallHeader
     title="Ouvir Rádio"
     :icon="Headphones"
     :closeOnClickOutside="false"

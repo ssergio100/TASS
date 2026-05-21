@@ -21,7 +21,11 @@ const settings = useSettingsStore();
 
 const radioName = ref('');
 const radioUrl = ref('');
-const error = ref('');
+const errors = ref({
+  name: '',
+  url: '',
+  general: ''
+});
 
 // Estado do Teste de URL
 const isTesting = ref(false);
@@ -56,14 +60,16 @@ const handleTestUrl = () => {
     return;
   }
 
-  error.value = '';
+  errors.value.url = '';
+  errors.value.general = '';
+  
   if (!radioUrl.value.trim()) {
-    error.value = 'Insira uma URL para testar.';
+    errors.value.url = 'Insira uma URL para testar.';
     return;
   }
 
   if (!radioUrl.value.startsWith('http')) {
-    error.value = 'URL inválida.';
+    errors.value.url = 'URL inválida.';
     return;
   }
 
@@ -84,7 +90,7 @@ const handleTestUrl = () => {
       
       isTesting.value = false;
       isTestPlaying.value = false;
-      error.value = 'Erro ao carregar URL de rádio.';
+      errors.value.url = 'Erro ao carregar URL de rádio.';
       notificationService.toast('URL de rádio inválida ou inacessível.', 'error');
       testAudio.value = null;
     });
@@ -95,24 +101,37 @@ const handleTestUrl = () => {
       if (!testAudio.value) return;
       
       isTesting.value = false;
-      error.value = 'Erro ao iniciar reprodução.';
+      errors.value.url = 'Erro ao iniciar reprodução.';
     });
   } catch (err) {
     isTesting.value = false;
-    error.value = 'Erro ao testar URL.';
+    errors.value.url = 'Erro ao testar URL.';
   }
 };
 
 const handleSave = async () => {
-  error.value = '';
+  errors.value.name = '';
+  errors.value.url = '';
+  errors.value.general = '';
   
-  if (!radioName.value.trim() || !radioUrl.value.trim()) {
-    error.value = 'Preencha o nome e a URL da rádio.';
+  let hasError = false;
+  if (!radioName.value.trim()) {
+    errors.value.name = 'Obrigatório';
+    hasError = true;
+  }
+  if (!radioUrl.value.trim()) {
+    errors.value.url = 'Obrigatório';
+    hasError = true;
+  }
+  
+  if (hasError) {
+    errors.value.general = 'Preencha o nome e a URL da rádio.';
     return;
   }
   
   if (!radioUrl.value.startsWith('http')) {
-    error.value = 'A URL deve começar com http:// ou https://';
+    errors.value.url = 'A URL deve começar com http:// ou https://';
+    errors.value.general = 'A URL deve começar com http:// ou https://';
     return;
   }
 
@@ -138,6 +157,7 @@ const handleSave = async () => {
   <BaseModal 
     maxWidth="max-w-md" 
     layout="standard"
+    smallHeader
     :title="radioToEdit ? 'Editar Rádio' : 'Adicionar Rádio'"
     subtitle="Streaming de Áudio"
     :icon="Headphones"
@@ -154,7 +174,8 @@ const handleSave = async () => {
       <AppInput 
         v-model="radioName" 
         placeholder="Ex: Jazz Lounge" 
-        :error="error && !radioName ? 'Obrigatório' : ''"
+        :error="errors.name"
+        @update:modelValue="errors.name = ''; errors.general = ''"
       />
     </div>
     
@@ -195,16 +216,17 @@ const handleSave = async () => {
         v-model="radioUrl" 
         type="url" 
         placeholder="https://..." 
-        :error="error && !radioUrl ? 'Obrigatório' : ''"
+        :error="errors.url"
+        @update:modelValue="errors.url = ''; errors.general = ''"
       />
     </div>
 
     <div 
-      v-if="error" 
+      v-if="errors.general" 
       class="text-center text-red-500 text-[10px] font-black uppercase tracking-widest animate-shake p-2 border border-red-500/20"
       :style="{ borderRadius: 'var(--app-input-radius)' }"
     >
-      {{ error }}
+      {{ errors.general }}
     </div>
 
     <!-- Footer Compacto -->
