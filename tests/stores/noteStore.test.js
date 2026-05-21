@@ -1,23 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useNoteStore } from '../../src/stores/noteStore';
-import { db } from '../../src/db.js';
+import { useAuthStore } from '../../src/stores/authStore';
 
-// Helper para criar o mock do encadeamento do Dexie
-const createDexieMock = (lastValue) => ({
-  toCollection: vi.fn().mockReturnThis(),
-  last: vi.fn().mockResolvedValue(lastValue)
+vi.mock('../../src/stores/authStore', () => {
+  const mockInstance = {
+    isAuthenticated: true,
+    request: vi.fn()
+  };
+  return {
+    useAuthStore: () => mockInstance
+  };
 });
-
-vi.mock('../../src/db.js', () => ({
-  db: {
-    notes: {
-      toCollection: vi.fn(),
-      add: vi.fn(),
-      update: vi.fn()
-    }
-  }
-}));
 
 describe('NoteStore', () => {
   beforeEach(() => {
@@ -27,30 +21,30 @@ describe('NoteStore', () => {
 
   it('deve carregar a última nota salva', async () => {
     const store = useNoteStore();
-    const mockNote = { id: 1, content: 'Minha nota' };
+    const authStore = useAuthStore();
+    const mockNotes = [{ id: 1, content: 'Minha nota' }];
     
-    // Configura o mock para este teste específico
-    db.notes.toCollection.mockReturnValue({
-      last: vi.fn().mockResolvedValue(mockNote)
-    });
+    authStore.request.mockResolvedValue(mockNotes);
 
     await store.loadNote();
 
+    expect(authStore.request).toHaveBeenCalledWith('/api/notes');
     expect(store.note).toBe('Minha nota');
     expect(store.isLoaded).toBe(true);
   });
 
   it('deve salvar alterações na nota existente', async () => {
     const store = useNoteStore();
+    const authStore = useAuthStore();
     
-    // Simula que existe uma nota
-    db.notes.toCollection.mockReturnValue({
-      last: vi.fn().mockResolvedValue({ id: 1, content: 'velha' })
-    });
+    authStore.request.mockResolvedValue({ id: 1, content: 'nova' });
 
     await store.saveNote('nova');
 
     expect(store.note).toBe('nova');
-    expect(db.notes.update).toHaveBeenCalledWith(1, expect.objectContaining({ content: 'nova' }));
+    expect(authStore.request).toHaveBeenCalledWith('/api/notes', expect.objectContaining({
+      method: 'POST',
+      body: expect.stringContaining('"content":"nova"')
+    }));
   });
 });

@@ -1,37 +1,41 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { db } from '../db.js';
+import { useAuthStore } from './authStore';
 
 export const useNoteStore = defineStore('note', () => {
   const note = ref('');
   const isLoaded = ref(false);
 
   const loadNote = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      isLoaded.value = true;
+      return;
+    }
     try {
-      const savedNote = await db.notes.toCollection().last();
-      if (savedNote) {
-        note.value = savedNote.content;
+      const notes = await authStore.request('/api/notes');
+      if (notes && notes.length > 0) {
+        note.value = notes[0].content;
       } else {
-        // Create initial empty note if none exists
-        await db.notes.add({ content: '', updatedAt: Date.now() });
+        note.value = '';
       }
       isLoaded.value = true;
     } catch (error) {
-      console.error("Failed to load note:", error);
+      console.error("Failed to load note from server:", error);
     }
   };
 
   const saveNote = async (content) => {
+    const authStore = useAuthStore();
     note.value = content;
+    if (!authStore.isAuthenticated) return;
     try {
-      const lastNote = await db.notes.toCollection().last();
-      if (lastNote) {
-        await db.notes.update(lastNote.id, { content, updatedAt: Date.now() });
-      } else {
-        await db.notes.add({ content, updatedAt: Date.now() });
-      }
+      await authStore.request('/api/notes', {
+        method: 'POST',
+        body: JSON.stringify({ content, updatedAt: Date.now() })
+      });
     } catch (error) {
-      console.error("Failed to save note:", error);
+      console.error("Failed to save note to server:", error);
     }
   };
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
-import { db } from '../db.js';
+import { useAuthStore } from './authStore';
 
 export const useSettingsStore = defineStore('settings', () => {
   const theme = ref('dark');
@@ -22,6 +22,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const notesSide = ref('right');
   const backgroundImage = ref('');
   const keepWindowState = ref(localStorage.getItem('app-keep-window-state') === 'true');
+  const hideWelcomeModal = ref(false);
 
   // Sincroniza mudança do keepWindowState com localStorage e limpa se necessário
   watch(keepWindowState, (val) => {
@@ -62,7 +63,6 @@ export const useSettingsStore = defineStore('settings', () => {
   const contrastEnhanced = ref(true);
   const darkenWallpaper = ref(true);
 
-
   const customWallpapers = ref([
     { name: 'Dark Abstract', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop' },
     { name: 'Deep Space', url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop' },
@@ -77,15 +77,19 @@ export const useSettingsStore = defineStore('settings', () => {
   const isInitialized = ref(false);
 
   const loadSettings = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      isInitialized.value = true;
+      return;
+    }
+    
     try {
-      const allSettings = await db.settings.toArray();
-      const settingsMap = Object.fromEntries(allSettings.map(s => [s.key, s.value]));
+      const settingsMap = await authStore.request('/api/settings');
 
       if (settingsMap['app-theme'] !== undefined) theme.value = settingsMap['app-theme'];
       if (settingsMap['app-columns'] !== undefined) columns.value = settingsMap['app-columns'];
       if (settingsMap['app-width'] !== undefined) {
         appWidth.value = settingsMap['app-width'];
-        // Auto-upgrade: Se o usuário estiver no padrão antigo (1000px), sobe para o novo padrão (1400px)
         if (appWidth.value === 1000) {
           appWidth.value = 1400;
           saveSetting('app-width', 1400);
@@ -106,21 +110,18 @@ export const useSettingsStore = defineStore('settings', () => {
       if (settingsMap['app-work-end'] !== undefined) workEnd.value = settingsMap['app-work-end'];
       if (settingsMap['app-work-days'] !== undefined) workDays.value = settingsMap['app-work-days'];
       if (settingsMap['app-auto-pause-work'] !== undefined) autoPauseOutsideWork.value = settingsMap['app-auto-pause-work'];
-      if (settingsMap['app-bg-image'] !== undefined) {
-        backgroundImage.value = settingsMap['app-bg-image'];
-      }
+      if (settingsMap['app-bg-image'] !== undefined) backgroundImage.value = settingsMap['app-bg-image'];
       if (settingsMap['app-bg-blur'] !== undefined) backgroundBlur.value = settingsMap['app-bg-blur'];
       if (settingsMap['app-card-opacity'] !== undefined) cardOpacity.value = settingsMap['app-card-opacity'];
       if (settingsMap['app-card-radius'] !== undefined) cardBorderRadius.value = settingsMap['app-card-radius'];
       if (settingsMap['app-font-family'] !== undefined) fontFamily.value = settingsMap['app-font-family'];
       if (settingsMap['app-opacity-targets'] !== undefined) opacityTargets.value = settingsMap['app-opacity-targets'];
+      if (settingsMap['app-hide-welcome'] !== undefined) hideWelcomeModal.value = settingsMap['app-hide-welcome'] === 'true' || settingsMap['app-hide-welcome'] === true;
       
-      // Carrega wallpapers customizados salvos no banco
       if (settingsMap['app-custom-wallpapers'] !== undefined) {
         customWallpapers.value = settingsMap['app-custom-wallpapers'];
       }
 
-      // Injeção Inteligente: Sugere os wallpapers de elite apenas se a galeria ainda estiver vazia
       if (customWallpapers.value.length === 0) {
         const eliteWallpapers = [
           { name: 'Minimalist Zen', url: 'https://images.unsplash.com/photo-1510672981848-a1c4f1cb5ccf?q=80&w=1920&auto=format&fit=crop' },
@@ -131,8 +132,9 @@ export const useSettingsStore = defineStore('settings', () => {
           { name: 'Scholar’s Retreat', url: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1920&auto=format&fit=crop' }
         ];
         customWallpapers.value = eliteWallpapers;
-        saveAllSettings(); // Salva a carga inicial
+        saveAllSettings();
       }
+
       if (settingsMap['app-task-number-size'] !== undefined) taskNumberSize.value = settingsMap['app-task-number-size'];
       if (settingsMap['app-task-desc-size'] !== undefined) taskDescriptionSize.value = settingsMap['app-task-desc-size'];
       if (settingsMap['app-task-timer-size'] !== undefined) taskTimerSize.value = settingsMap['app-task-timer-size'];
@@ -147,79 +149,79 @@ export const useSettingsStore = defineStore('settings', () => {
       if (settingsMap['app-contrast-enhanced'] !== undefined) contrastEnhanced.value = settingsMap['app-contrast-enhanced'] === true;
       if (settingsMap['app-darken-wallpaper'] !== undefined) darkenWallpaper.value = settingsMap['app-darken-wallpaper'] === true;
       
-      // Carrega configuração do localStorage
       keepWindowState.value = localStorage.getItem('app-keep-window-state') === 'true';
 
       isInitialized.value = true;
     } catch (error) {
-      console.error("Failed to load settings from IndexedDB", error);
+      console.error("Failed to load settings from SQLite", error);
     }
   };
 
   const saveSetting = async (key, value) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     try {
-      // "Limpa" o dado para remover proxies do Vue e evitar DataCloneError no IndexedDB
-      const cleanValue = (value && typeof value === 'object') 
-        ? JSON.parse(JSON.stringify(value)) 
-        : value;
-      await db.settings.put({ key, value: cleanValue });
+      await authStore.request('/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({ [key]: value })
+      });
     } catch (error) {
       console.error(`Failed to save setting ${key}`, error);
     }
   };
 
   const saveAllSettings = async () => {
-    const settingsToSave = [
-      { key: 'app-theme', value: theme.value },
-      { key: 'app-columns', value: columns.value },
-      { key: 'app-width', value: appWidth.value },
-      { key: 'app-show-placeholders', value: showEmptyPlaceholders.value },
-      { key: 'app-wellness-enabled', value: wellnessEnabled.value },
-      { key: 'app-wellness-interval', value: wellnessInterval.value },
-      { key: 'app-active-sprint', value: activeSprintId.value },
-      { key: 'app-gitlab-url', value: gitlabUrl.value },
-      { key: 'app-gitlab-mode', value: gitlabIntegrationMode.value },
-      { key: 'app-gitlab-project-id', value: gitlabProjectId.value },
-      { key: 'app-gitlab-token', value: gitlabToken.value },
-      { key: 'app-gitlab-base-branch', value: gitlabBaseBranch.value },
-      { key: 'app-track-inactivity', value: trackInactivity.value },
-      { key: 'app-inactivity-threshold', value: inactivityThreshold.value },
-      { key: 'app-work-start', value: workStart.value },
-      { key: 'app-work-end', value: workEnd.value },
-      { key: 'app-work-days', value: workDays.value },
-      { key: 'app-auto-pause-work', value: autoPauseOutsideWork.value },
-      { key: 'app-bg-image', value: backgroundImage.value },
-      { key: 'app-bg-blur', value: backgroundBlur.value },
-      { key: 'app-card-opacity', value: cardOpacity.value },
-      { key: 'app-card-radius', value: cardBorderRadius.value },
-      { key: 'app-font-family', value: fontFamily.value },
-      { key: 'app-opacity-targets', value: opacityTargets.value },
-      { key: 'app-custom-wallpapers', value: customWallpapers.value },
-      { key: 'app-task-number-size', value: taskNumberSize.value },
-      { key: 'app-task-desc-size', value: taskDescriptionSize.value },
-      { key: 'app-task-timer-size', value: taskTimerSize.value },
-      { key: 'app-notes-side', value: notesSide.value },
-      { key: 'app-notes-btn-top', value: notesButtonTop.value },
-      { key: 'app-notes-width', value: notesWidth.value },
-      { key: 'app-card-padding', value: cardPadding.value },
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
 
-      { key: 'app-column-titles', value: columnTitles.value },
-      { key: 'app-context-menu-style', value: contextMenuStyle.value },
-      { key: 'app-context-menu-mode', value: contextMenuMode.value },
-      { key: 'app-contrast-enhanced', value: contrastEnhanced.value },
-      { key: 'app-darken-wallpaper', value: darkenWallpaper.value }
-
-    ].map(item => ({
-      key: item.key,
-      // "Limpa" o dado para remover proxies do Vue
-      value: (item.value && typeof item.value === 'object') 
-        ? JSON.parse(JSON.stringify(item.value)) 
-        : item.value
-    }));
+    const settingsToSave = {
+      'app-theme': theme.value,
+      'app-columns': columns.value,
+      'app-width': appWidth.value,
+      'app-show-placeholders': showEmptyPlaceholders.value,
+      'app-wellness-enabled': wellnessEnabled.value,
+      'app-wellness-interval': wellnessInterval.value,
+      'app-active-sprint': activeSprintId.value,
+      'app-gitlab-url': gitlabUrl.value,
+      'app-gitlab-mode': gitlabIntegrationMode.value,
+      'app-gitlab-project-id': gitlabProjectId.value,
+      'app-gitlab-token': gitlabToken.value,
+      'app-gitlab-base-branch': gitlabBaseBranch.value,
+      'app-track-inactivity': trackInactivity.value,
+      'app-inactivity-threshold': inactivityThreshold.value,
+      'app-work-start': workStart.value,
+      'app-work-end': workEnd.value,
+      'app-work-days': workDays.value,
+      'app-auto-pause-work': autoPauseOutsideWork.value,
+      'app-bg-image': backgroundImage.value,
+      'app-bg-blur': backgroundBlur.value,
+      'app-card-opacity': cardOpacity.value,
+      'app-card-radius': cardBorderRadius.value,
+      'app-font-family': fontFamily.value,
+      'app-opacity-targets': opacityTargets.value,
+      'app-custom-wallpapers': customWallpapers.value,
+      'app-task-number-size': taskNumberSize.value,
+      'app-task-desc-size': taskDescriptionSize.value,
+      'app-task-timer-size': taskTimerSize.value,
+      'app-notes-side': notesSide.value,
+      'app-notes-btn-top': notesButtonTop.value,
+      'app-notes-width': notesWidth.value,
+      'app-card-padding': cardPadding.value,
+      'app-column-titles': columnTitles.value,
+      'app-context-menu-style': contextMenuStyle.value,
+      'app-context-menu-mode': contextMenuMode.value,
+      'app-contrast-enhanced': contrastEnhanced.value,
+      'app-darken-wallpaper': darkenWallpaper.value,
+      'app-hide-welcome': hideWelcomeModal.value
+    };
 
     try {
-      await db.settings.bulkPut(settingsToSave);
-      console.log("All settings saved to database");
+      await authStore.request('/api/settings', {
+        method: 'POST',
+        body: JSON.stringify(settingsToSave)
+      });
+      console.log("All settings saved to SQLite");
     } catch (error) {
       console.error("Failed to save all settings", error);
     }
@@ -231,12 +233,10 @@ export const useSettingsStore = defineStore('settings', () => {
     inactivityThreshold, activeSprintId, taskNumberSize,
     taskDescriptionSize, taskTimerSize, notesSide, backgroundImage, backgroundBlur,
     notesButtonTop, notesWidth, cardPadding, fontFamily, trackInactivity,
-
     workStart, workEnd, workDays, autoPauseOutsideWork, cardOpacity,
     cardBorderRadius, opacityTargets, customWallpapers, columnTitles,
     wellnessEnabled, wellnessInterval, contrastEnhanced, darkenWallpaper, keepWindowState,
-    contextMenuStyle, contextMenuMode,
+    contextMenuStyle, contextMenuMode, hideWelcomeModal,
     isInitialized, loadSettings, saveSetting, saveAllSettings
-
   };
 });

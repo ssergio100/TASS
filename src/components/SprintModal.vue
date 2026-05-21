@@ -14,13 +14,17 @@ const taskStore = useTaskStore();
 const settings = useSettingsStore();
 
 const props = defineProps({
-  activeSprintId: [String, Number]
+  activeSprintId: [String, Number],
+  initialShowAddForm: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const emit = defineEmits(['close', 'updated', 'select-sprint']);
 
 const newSprintDate = ref(null);
-const showAddForm = ref(false);
+const showAddForm = ref(props.initialShowAddForm);
 
 const addSprint = async () => {
   if (!newSprintDate.value) return;

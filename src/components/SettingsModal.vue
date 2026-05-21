@@ -2,9 +2,11 @@
 import { ref, watch, onMounted, computed } from 'vue';
 import { 
   Download, Upload, Globe, Palette, Cloud, Loader2, LogOut, LogIn, Trash2,
-  ShieldCheck, Monitor, Briefcase, Activity, FileJson, Server, Clock, X, Sparkles, Bug, MousePointer2, Layout, Layers, Maximize
+  ShieldCheck, Monitor, Briefcase, Activity, FileJson, Server, Clock, X, Sparkles, Bug, MousePointer2, Layout, Layers, Maximize,
+  User, KeyRound, Copy, CheckCircle2
 } from 'lucide-vue-next';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useAuthStore } from '../stores/authStore';
 import { notificationService } from '../services/notificationService';
 import { googleDriveService } from '../services/googleDriveService';
 import { backupService } from '../services/backupService';
@@ -22,7 +24,14 @@ const settings = useSettingsStore();
 const taskStore = useTaskStore();
 const emit = defineEmits(['close', 'save', 'export-tasks', 'import-tasks', 'export-system', 'import-system', 'test-wellness', 'open-interface', 'test-modal']);
 
-const activeTab = ref('gitlab');
+const props = defineProps({
+  initialTab: {
+    type: String,
+    default: null
+  }
+});
+
+const activeTab = ref(props.initialTab || 'gitlab');
 const isGoogleLoading = ref(false);
 const isGoogleAuthenticated = ref(googleDriveService.isAuthenticated());
 const googleUser = ref(null);
@@ -36,7 +45,9 @@ onMounted(() => {
     googleUser.value = profile;
   });
 
-  if (settings.keepWindowState) {
+  if (props.initialTab) {
+    activeTab.value = props.initialTab;
+  } else if (settings.keepWindowState) {
     const saved = localStorage.getItem('app-last-settings-tab');
     if (saved) activeTab.value = saved;
   }
@@ -54,6 +65,7 @@ const tabs = [
   { id: 'health', label: 'Saúde e Bem-estar', icon: Activity, color: 'text-indigo-500', desc: 'Lembretes inteligentes para manter sua saúde.' },
   { id: 'system', label: 'Sistema e Interface', icon: Monitor, color: 'text-indigo-500', desc: 'Configurações globais de comportamento.' },
   { id: 'security', label: 'Dados e Segurança', icon: ShieldCheck, color: 'text-indigo-500', desc: 'Gerencie backups e o banco de dados local.' },
+  { id: 'account', label: 'Minha Conta', icon: User, color: 'text-indigo-500', desc: 'Gerencie sua sessão e dados de acesso.' }
 ];
 
 const activeTabObj = computed(() => tabs.find(t => t.id === activeTab.value) || tabs[0]);
@@ -244,6 +256,21 @@ const handleResetSystem = async () => {
     } else {
       notificationService.alert('Erro', 'Não foi possível resetar o sistema.', 'error');
     }
+  }
+};
+
+const authStore = useAuthStore();
+
+const handleLogout = async () => {
+  const confirmed = await notificationService.confirm(
+    'Sair do TASS?',
+    'Tem certeza que deseja sair da sua conta?',
+    'Sair',
+    'warning'
+  );
+  if (confirmed) {
+    authStore.logout();
+    emit('close');
   }
 };
 </script>
@@ -520,6 +547,29 @@ const handleResetSystem = async () => {
                   <div class="glass-section p-6 space-y-4 relative overflow-hidden"><div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><FileJson class="w-16 h-16" /></div><div class="flex items-center gap-3 mb-2 relative z-10"><FileJson class="w-5 h-5 text-indigo-500" /><h4 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight">Apenas Tarefas</h4></div><p class="text-[10px] text-slate-500 leading-relaxed mb-4 relative z-10">Exporta apenas a sua lista de tarefas atual. Ideal para transferências rápidas ou backups frequentes.</p><div class="flex flex-col xl:flex-row gap-3 relative z-10"><button @click="emit('export-tasks')" class="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-white/5 hover:bg-indigo-500 hover:text-white rounded-xl text-xs font-bold transition-all border border-app-border-light"><Download class="w-4 h-4" /> Exportar</button><label class="flex-1 flex items-center justify-center gap-2 py-2 bg-white dark:bg-slate-100 dark:bg-white/5 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-bold transition-all border border-app-border-light cursor-pointer text-center"><Upload class="w-4 h-4" /> Importar<input type="file" accept=".json" class="hidden" @change="handleImportTasks" /></label></div></div>
                 </div>
                 <div class="glass-section p-6 bg-red-500/5 dark:bg-red-500/10 border-red-500/20 space-y-4"><div class="flex items-center gap-3 mb-2"><Activity class="w-5 h-5 text-red-500" /><h4 class="text-sm font-black text-red-600 dark:text-red-400 uppercase tracking-tight">Zona de Perigo</h4></div><p class="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed mb-4">Deseja limpar tudo e começar do zero? Esta ação removerá todas as tarefas e sprints do seu banco de dados local.</p><button @click="handleResetSystem" class="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/20 active:scale-95">Zerar Banco de Dados</button></div>
+              </div>
+
+              <div v-else-if="activeTab === 'account'" :key="'account'" class="space-y-6">
+                <div class="glass-section p-6">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-500">
+                        <User class="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 class="text-sm font-black text-app-main uppercase tracking-tight">Detalhes do Usuário</h3>
+                        <p class="text-xs text-app-muted font-mono mt-0.5">{{ authStore.user?.email }}</p>
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      @click="handleLogout" 
+                      class="btn btn-secondary px-4 py-2 border-none shadow-none text-xs text-red-400 hover:text-red-500 flex items-center gap-1.5"
+                    >
+                      <LogOut class="w-3.5 h-3.5" /> Sair da Conta
+                    </button>
+                  </div>
+                </div>
               </div>
       </transition>
 

@@ -16,18 +16,24 @@ const settings = useSettingsStore();
 const taskStore = useTaskStore();
 
 const props = defineProps({
-  isOpen: Boolean
+  isOpen: Boolean,
+  initialTab: {
+    type: String,
+    default: null
+  }
 });
 
 const emit = defineEmits(['close', 'test-wellness', 'open-settings']);
 
-const activeTab = ref('wallpapers');
+const activeTab = ref(props.initialTab || 'wallpapers');
 // Google Drive picker state removed
 
 // Google Drive wallpaper functions removed
 
 onMounted(() => {
-  if (settings.keepWindowState) {
+  if (props.initialTab) {
+    activeTab.value = props.initialTab;
+  } else if (settings.keepWindowState) {
     const saved = localStorage.getItem('app-last-interface-tab');
     if (saved) activeTab.value = saved;
   }

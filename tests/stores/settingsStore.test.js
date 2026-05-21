@@ -1,18 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useSettingsStore } from '../../src/stores/settingsStore';
-import { db } from '../../src/db.js';
+import { useAuthStore } from '../../src/stores/authStore';
 
-// Mocks do DB
-vi.mock('../../src/db.js', () => ({
-  db: {
-    settings: {
-      toArray: vi.fn(),
-      put: vi.fn(),
-      bulkPut: vi.fn()
-    }
-  }
-}));
+vi.mock('../../src/stores/authStore', () => {
+  const mockInstance = {
+    isAuthenticated: true,
+    request: vi.fn()
+  };
+  return {
+    useAuthStore: () => mockInstance
+  };
+});
 
 describe('SettingsStore', () => {
   beforeEach(() => {
@@ -29,11 +28,12 @@ describe('SettingsStore', () => {
 
   it('deve carregar configurações do banco de dados na inicialização', async () => {
     const store = useSettingsStore();
-    db.settings.toArray.mockResolvedValue([
-      { key: 'app-theme', value: 'light' },
-      { key: 'app-columns', value: 4 },
-      { key: 'app-darken-wallpaper', value: false }
-    ]);
+    const authStore = useAuthStore();
+    authStore.request.mockResolvedValue({
+      'app-theme': 'light',
+      'app-columns': 4,
+      'app-darken-wallpaper': false
+    });
 
     await store.loadSettings();
 
@@ -50,17 +50,27 @@ describe('SettingsStore', () => {
 
   it('deve salvar uma configuração individual', async () => {
     const store = useSettingsStore();
+    const authStore = useAuthStore();
+    
     await store.saveSetting('app-theme', 'dark');
-    expect(db.settings.put).toHaveBeenCalledWith({ key: 'app-theme', value: 'dark' });
+    
+    expect(authStore.request).toHaveBeenCalledWith('/api/settings', expect.objectContaining({
+      method: 'POST',
+      body: expect.stringContaining('"app-theme":"dark"')
+    }));
   });
 
   it('deve realizar auto-upgrade da largura se estiver no padrão antigo', async () => {
     const store = useSettingsStore();
-    db.settings.toArray.mockResolvedValue([{ key: 'app-width', value: 1000 }]);
+    const authStore = useAuthStore();
+    authStore.request.mockResolvedValue({ 'app-width': 1000 });
 
     await store.loadSettings();
 
-      expect(store.appWidth).toBe(1400);
-    expect(db.settings.put).toHaveBeenCalledWith({ key: 'app-width', value: 1400 });
+    expect(store.appWidth).toBe(1400);
+    expect(authStore.request).toHaveBeenCalledWith('/api/settings', expect.objectContaining({
+      method: 'POST',
+      body: expect.stringContaining('"app-width":1400')
+    }));
   });
 });

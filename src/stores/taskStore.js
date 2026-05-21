@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { db } from '../db.js';
 import { notificationService } from '../services/notificationService';
 import { useSettingsStore } from './settingsStore';
+import { useAuthStore } from './authStore';
 import { formatMsToHMS } from '../utils/time.js';
 
 export const useTaskStore = defineStore('task', () => {
@@ -19,7 +19,9 @@ export const useTaskStore = defineStore('task', () => {
     
     if (settings.activeSprintId !== 'all') {
       const id = parseInt(settings.activeSprintId);
-      result = result.filter(t => t.sprintId === id);
+      if (!isNaN(id)) {
+        result = result.filter(t => t.sprintId === id);
+      }
     }
 
     if (statusFilter.value === 'active') {
@@ -66,25 +68,30 @@ export const useTaskStore = defineStore('task', () => {
     let filtered = tasks.value;
     if (settings.activeSprintId !== 'all') {
       const id = parseInt(settings.activeSprintId);
-      filtered = filtered.filter(t => t.sprintId === id);
+      if (!isNaN(id)) {
+        filtered = filtered.filter(t => t.sprintId === id);
+      }
     }
     const totalMs = filtered.reduce((acc, t) => acc + (t.totalWorked || t.totalTimeSpent || 0), 0);
     return formatMsToHMS(totalMs, true);
   });
 
   const loadTasks = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
     isLoading.value = true;
     try {
-      let dbTasks = await db.tasks.toArray();
+      let dbTasks = await authStore.request('/api/tasks');
       
       const runningTask = dbTasks.find(t => t.isRunning);
       if (runningTask) {
         // Se a tarefa estava rodando, ela continua rodando ao iniciar o sistema.
         // No entanto, resetamos o lastStartTime para 'agora'.
-        // Isso garante que o tempo em que o PC esteve desligado NÃO seja somado,
-        // mas a tarefa retome sua contagem automaticamente a partir do momento atual.
         runningTask.lastStartTime = Date.now();
-        await db.tasks.update(runningTask.id, { lastStartTime: runningTask.lastStartTime });
+        await authStore.request(`/api/tasks/${runningTask.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ lastStartTime: runningTask.lastStartTime })
+        });
       }
       
       dbTasks.sort((a, b) => a.position - b.position);
@@ -97,19 +104,27 @@ export const useTaskStore = defineStore('task', () => {
   };
 
   const loadSprints = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
     try {
-      sprints.value = await db.sprints.toArray();
+      sprints.value = await authStore.request('/api/sprints');
     } catch (error) {
       console.error("Failed to load sprints:", error);
     }
   };
 
   const addTask = async (taskData) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     const targetColumn = 1;
     const updates = [];
     tasks.value.forEach(t => {
       t.position += 1;
-      updates.push(db.tasks.update(t.id, { position: t.position }));
+      updates.push(authStore.request(`/api/tasks/${t.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ position: t.position })
+      }));
     });
     await Promise.all(updates);
 
@@ -126,11 +141,13 @@ export const useTaskStore = defineStore('task', () => {
     };
 
     try {
-      const id = await db.tasks.add(taskToAdd);
-      taskToAdd.id = id;
-      tasks.value.unshift(taskToAdd);
+      const addedTask = await authStore.request('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify(taskToAdd)
+      });
+      tasks.value.unshift(addedTask);
       notificationService.toast('Tarefa adicionada!');
-      return id;
+      return addedTask.id;
     } catch (error) {
       console.error("Failed to add task:", error);
       throw error;
@@ -138,11 +155,16 @@ export const useTaskStore = defineStore('task', () => {
   };
 
   const updateTask = async (id, updates) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     try {
-      await db.tasks.update(id, updates);
+      await authStore.request(`/api/tasks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
       const index = tasks.value.findIndex(t => t.id === id);
       if (index !== -1) {
-        // Substituímos o objeto inteiro para garantir reatividade total
         const updatedTask = { ...tasks.value[index], ...updates };
         tasks.value[index] = updatedTask;
         
@@ -160,17 +182,26 @@ export const useTaskStore = defineStore('task', () => {
   const lastDeletedTask = ref(null);
 
   const deleteTask = async (id) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     try {
       const taskToDelete = tasks.value.find(t => t.id === id);
       if (!taskToDelete) return;
       lastDeletedTask.value = { ...taskToDelete };
-      await db.tasks.delete(id);
+      
+      await authStore.request(`/api/tasks/${id}`, {
+        method: 'DELETE'
+      });
       
       const updates = [];
       tasks.value.forEach(t => {
         if (t.position > taskToDelete.position) {
           t.position -= 1;
-          updates.push(db.tasks.update(t.id, { position: t.position }));
+          updates.push(authStore.request(`/api/tasks/${t.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ position: t.position })
+          }));
         }
       });
       await Promise.all(updates);
@@ -183,20 +214,30 @@ export const useTaskStore = defineStore('task', () => {
 
   const restoreTask = async () => {
     if (!lastDeletedTask.value) return;
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     try {
       const taskToRestore = { ...lastDeletedTask.value };
       const updates = [];
       tasks.value.forEach(t => {
         if (t.position >= taskToRestore.position) {
           t.position += 1;
-          updates.push(db.tasks.update(t.id, { position: t.position }));
+          updates.push(authStore.request(`/api/tasks/${t.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ position: t.position })
+          }));
         }
       });
       await Promise.all(updates);
+      
       delete taskToRestore.id;
-      const id = await db.tasks.add(taskToRestore);
-      taskToRestore.id = id;
-      tasks.value.push(taskToRestore);
+      const addedTask = await authStore.request('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify(taskToRestore)
+      });
+      
+      tasks.value.push(addedTask);
       tasks.value.sort((a, b) => a.position - b.position);
       lastDeletedTask.value = null;
       notificationService.toast('Tarefa restaurada!');
@@ -208,6 +249,9 @@ export const useTaskStore = defineStore('task', () => {
   const toggleTimer = async (task) => {
     if (task.completed) return;
     const now = Date.now();
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     if (task.isRunning) {
       task.isRunning = false;
       if (task.lastStartTime) {
@@ -232,11 +276,14 @@ export const useTaskStore = defineStore('task', () => {
             t.totalWorked = (t.totalWorked || 0) + diff;
           }
           t.lastStartTime = null;
-          await db.tasks.update(t.id, { 
-            isRunning: false, 
-            totalTimeSpent: t.totalTimeSpent, 
-            totalWorked: t.totalWorked,
-            lastStartTime: null 
+          await authStore.request(`/api/tasks/${t.id}`, { 
+            method: 'PUT',
+            body: JSON.stringify({
+              isRunning: false, 
+              totalTimeSpent: t.totalTimeSpent, 
+              totalWorked: t.totalWorked,
+              lastStartTime: null 
+            })
           });
         }
       }
@@ -272,12 +319,18 @@ export const useTaskStore = defineStore('task', () => {
   };
 
   const autoSaveRunningTasks = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+
     const promises = tasks.value
       .filter(t => t.isRunning)
-      .map(t => db.tasks.update(t.id, { 
-        totalTimeSpent: t.totalTimeSpent, 
-        totalWorked: t.totalWorked,
-        lastStartTime: t.lastStartTime 
+      .map(t => authStore.request(`/api/tasks/${t.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ 
+          totalTimeSpent: t.totalTimeSpent, 
+          totalWorked: t.totalWorked,
+          lastStartTime: t.lastStartTime 
+        })
       }));
     await Promise.all(promises);
   };
@@ -285,11 +338,16 @@ export const useTaskStore = defineStore('task', () => {
   const migrateOrphanTasks = async (maxColumns) => {
     const orphans = tasks.value.filter(t => t.columnId > maxColumns);
     if (orphans.length === 0) return;
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
 
     const updates = [];
     orphans.forEach(t => {
       t.columnId = 1;
-      updates.push(db.tasks.update(t.id, { columnId: 1 }));
+      updates.push(authStore.request(`/api/tasks/${t.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ columnId: 1 })
+      }));
     });
     await Promise.all(updates);
     notificationService.toast(`${orphans.length} tarefas órfãs movidas para a Coluna 1`);
@@ -297,30 +355,36 @@ export const useTaskStore = defineStore('task', () => {
 
   const updateAllPositions = async (allTasksOrdered) => {
     try {
-      const updates = allTasksOrdered.map((task, index) => {
-        const newPos = index + 1;
-        // Atualiza o objeto local sincronamente
-        task.position = newPos;
-        // Retorna a promise de update do banco
-        return db.tasks.update(task.id, { 
-          position: newPos, 
-          columnId: task.columnId 
-        });
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) return;
+
+      allTasksOrdered.forEach((task, index) => {
+        task.position = index + 1;
       });
-      
-      if (updates.length > 0) {
-        await Promise.all(updates);
-      }
+
+      const positions = allTasksOrdered.map(t => ({
+        id: t.id,
+        position: t.position,
+        columnId: t.columnId
+      }));
+
+      await authStore.request('/api/tasks/positions', {
+        method: 'PUT',
+        body: JSON.stringify({ positions })
+      });
     } catch (error) {
       console.error("Failed to update task positions:", error);
     }
   };
 
   const resetSystem = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return false;
+
     try {
-      await db.tasks.clear();
-      await db.sprints.clear();
-      await db.notes.clear();
+      await authStore.request('/api/auth/reset', {
+        method: 'POST'
+      });
       
       tasks.value = [];
       sprints.value = [];
@@ -341,8 +405,6 @@ export const useTaskStore = defineStore('task', () => {
 
       const updates = { [field]: newMs };
       
-      // Se estivermos ajustando a sessão atual (totalTimeSpent), 
-      // também atualizamos proporcionalmente o total trabalhado (totalWorked)
       if (field === 'totalTimeSpent') {
         const diff = newMs - task.totalTimeSpent;
         updates.totalWorked = (task.totalWorked || 0) + diff;

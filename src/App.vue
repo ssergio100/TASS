@@ -14,6 +14,7 @@ import GlobalModal from './components/GlobalModal.vue';
 import TaskContextMenu from './components/TaskContextMenu.vue';
 import GlobalDock from './components/GlobalDock.vue';
 import RadioPlayer from './components/RadioPlayer.vue';
+import WelcomeModal from './components/WelcomeModal.vue';
 
 // Composables
 import { useWellness } from './composables/useWellness.js';
@@ -32,22 +33,28 @@ import { useSettingsStore } from './stores/settingsStore';
 import { useTaskStore } from './stores/taskStore';
 import { backupService } from './services/backupService';
 import { db } from './db.js';
+import AuthOverlay from './components/AuthOverlay.vue';
+import { useAuthStore } from './stores/authStore';
 
 const settings = useSettingsStore();
 const taskStore = useTaskStore();
+const authStore = useAuthStore();
 
 // Board State Proxy (A Ponte de Dados)
 const boardColumns = ref([[], [], [], []]);
 
 const syncBoardWithStore = () => {
+  const newCols = [[], [], [], []];
   for (let i = 1; i <= 4; i++) {
-    boardColumns.value[i-1] = taskStore.filteredTasks
+    newCols[i-1] = taskStore.filteredTasks
       .filter(t => t.columnId === i)
       .sort((a, b) => a.position - b.position);
   }
+  boardColumns.value = newCols;
 };
 
 // UI State
+const showWelcome = ref(false);
 const showModal = ref(false);
 const showSettings = ref(false);
 const showSprints = ref(false);
@@ -57,6 +64,11 @@ const showRadio = ref(false);
 const showTimeAdjustment = ref(false);
 const taskToEdit = ref(null);
 const taskForTimeAdjustment = ref(null);
+
+// Modal initial states for Welcome Modal redirects
+const settingsInitialTab = ref(null);
+const interfaceInitialTab = ref(null);
+const sprintInitialShowAddForm = ref(false);
 
 // Sincroniza o board local quando as tarefas ou filtros mudam
 watch(
@@ -158,6 +170,41 @@ const handleToggleRadio = () => {
   showRadio.value = !showRadio.value;
 };
 
+// Dock openers that reset welcome modal initial selections
+const openSettingsFromDock = () => {
+  settingsInitialTab.value = null;
+  showSettings.value = true;
+};
+
+const openInterfaceFromDock = () => {
+  interfaceInitialTab.value = null;
+  showInterfaceMenu.value = true;
+};
+
+const openSprintsFromDock = () => {
+  sprintInitialShowAddForm.value = false;
+  showSprints.value = true;
+};
+
+// Handle welcome modal shortcut selection
+const handleWelcomeShortcut = (action) => {
+  showWelcome.value = false;
+  if (action === 'wallpaper') {
+    interfaceInitialTab.value = 'wallpapers';
+    showInterfaceMenu.value = true;
+  } else if (action === 'task') {
+    openAddModal();
+  } else if (action === 'sprint') {
+    sprintInitialShowAddForm.value = true;
+    showSprints.value = true;
+  } else if (action === 'radio') {
+    showRadio.value = true;
+  } else if (action === 'gitlab') {
+    settingsInitialTab.value = 'gitlab';
+    showSettings.value = true;
+  }
+};
+
 const handleTestModal = async (type) => {
   if (type === 'success') {
     notificationService.alert('Teste Concluído!', 'O modal de sucesso está funcionando.', 'success');
@@ -227,6 +274,120 @@ watch(isDraggingTask, (val) => {
   else document.body.classList.remove('dragging-task');
 });
 
+const checkAndMigrateDexie = async () => {
+  try {
+    // 1. Verificar se existem registros no Dexie
+    const tasksCount = await db.tasks.count();
+    const sprintsCount = await db.sprints.count();
+    const notesCount = await db.notes.count();
+    const radiosCount = await db.radios.count();
+    const settingsCount = await db.settings.count();
+
+    const totalLocalRecords = tasksCount + sprintsCount + notesCount + radiosCount + settingsCount;
+    if (totalLocalRecords === 0) {
+      return; // Nada para migrar
+    }
+
+    // 2. Perguntar ao usuário se deseja migrar
+    const confirmMigration = await notificationService.confirm(
+      'Migrar Dados Locais?',
+      'Detectamos dados salvos localmente neste navegador. Deseja migrar suas tarefas, sprints, configurações, notas e rádios para sua nova conta na nuvem?',
+      'Sim, Migrar Dados',
+      'warning'
+    );
+
+    if (!confirmMigration) {
+      return; // Usuário recusou a migração
+    }
+
+    // 3. Coletar os dados locais do Dexie
+    const localTasks = await db.tasks.toArray();
+    const localSprints = await db.sprints.toArray();
+    const localNotes = await db.notes.toArray();
+    const localRadios = await db.radios.toArray();
+    const localSettingsArray = await db.settings.toArray();
+
+    // Converter array de configurações para objeto key-value
+    const localSettings = {};
+    localSettingsArray.forEach(item => {
+      localSettings[item.key] = item.value;
+    });
+
+    const payload = {
+      tasks: localTasks,
+      sprints: localSprints,
+      settings: localSettings,
+      notes: localNotes,
+      radios: localRadios
+    };
+
+    // 4. Enviar para a rota do servidor /api/migrate
+    notificationService.toast('Migrando dados...', 'info');
+    await authStore.request('/api/migrate', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    // 5. Se a migração foi bem-sucedida, limpar o banco de dados local para evitar prompts futuros
+    await Promise.all([
+      db.tasks.clear(),
+      db.sprints.clear(),
+      db.notes.clear(),
+      db.radios.clear(),
+      db.settings.clear()
+    ]);
+
+    notificationService.alert(
+      'Migração Concluída!',
+      'Seus dados locais foram importados com sucesso para o banco de dados seguro da nuvem.',
+      'success'
+    );
+
+    // Recarregar os dados do store da nuvem
+    await settings.loadSettings();
+    applyTheme();
+    await taskStore.loadTasks();
+    await taskStore.loadSprints();
+    syncBoardWithStore();
+  } catch (error) {
+    console.error('Falha na migração do IndexedDB para o SQLite:', error);
+    notificationService.alert(
+      'Falha na Migração',
+      'Ocorreu um erro ao migrar seus dados para o servidor. Tente novamente mais tarde.',
+      'error'
+    );
+  }
+};
+
+const initializeAppData = async () => {
+  try {
+    await settings.loadSettings();
+    applyTheme();
+    await taskStore.loadTasks();
+    await taskStore.loadSprints();
+    syncBoardWithStore();
+    await checkAndMigrateDexie();
+
+    if (!settings.hideWelcomeModal) {
+      showWelcome.value = true;
+    }
+  } catch (error) {
+    console.error("Erro ao inicializar dados do TASS:", error);
+  }
+};
+
+watch(
+  () => authStore.isAuthenticated,
+  async (newValue, oldValue) => {
+    if (newValue) {
+      await initializeAppData();
+    } else if (oldValue === true) {
+      // Recarrega para limpar estado e evitar data leakage
+      window.location.reload();
+    }
+  }
+);
+
 onMounted(async () => {
   // Limpa dados legados de água do banco
   try {
@@ -235,14 +396,16 @@ onMounted(async () => {
     console.warn("Nada para limpar no DB");
   }
 
-  await settings.loadSettings();
-  applyTheme();
-  await taskStore.loadTasks();
-  await taskStore.loadSprints();
-  syncBoardWithStore();
-  
   // Inicia monitoramento do backend
   bridgeService.startPolling();
+
+  if (authStore.isAuthenticated) {
+    await initializeAppData();
+  } else {
+    // Se não logado, marca as configurações como carregadas para renderizar AuthOverlay no tema padrão
+    settings.isInitialized = true;
+    applyTheme();
+  }
 });
 </script>
 
@@ -291,144 +454,160 @@ onMounted(async () => {
     :class="{ 'select-none': isDraggingTask }"
     :style="{ fontFamily: settings.fontFamily }"
   >
-    <div 
-      class="w-full flex flex-col items-center px-4 md:px-6 pt-2 pb-32"
-      :class="[
-        isNotesDragging ? '' : 'transition-all duration-500',
-        isDraggingTask ? 'is-dragging-mode' : ''
-      ]"
-      :style="{ maxWidth: '98%' }"
-    >
-      <!-- TASS Branding (Bottom Right) -->
-      <div class="fixed bottom-6 right-6 md:bottom-10 md:right-12 z-20 flex flex-col items-end animate-[fadeInRight_0.8s_ease-out] select-none pointer-events-none opacity-30 md:opacity-60 hover:opacity-100 transition-opacity">
-        <div class="flex items-center gap-2">
-          <h1 
-            class="text-xl md:text-2xl leading-none bg-gradient-to-r from-[#00C4CC] to-[#7D2AE8] bg-clip-text text-transparent pr-2"
-            style="font-family: 'Satisfy', cursive;"
-          >
-            Tass
-          </h1>
-          <div class="w-1 h-6 md:h-8 bg-gradient-to-b from-[#00C4CC] to-[#7D2AE8] rounded-full shadow-[0_0_10px_rgba(0,196,204,0.2)]"></div>
+    <template v-if="authStore.isAuthenticated">
+      <div 
+        class="w-full flex flex-col items-center px-4 md:px-6 pt-2 pb-32"
+        :class="[
+          isNotesDragging ? '' : 'transition-all duration-500',
+          isDraggingTask ? 'is-dragging-mode' : ''
+        ]"
+        :style="{ maxWidth: '98%' }"
+      >
+        <!-- TASS Branding (Bottom Right) -->
+        <div class="fixed bottom-6 right-6 md:bottom-10 md:right-12 z-20 flex flex-col items-end animate-[fadeInRight_0.8s_ease-out] select-none pointer-events-none opacity-30 md:opacity-60 hover:opacity-100 transition-opacity">
+          <div class="flex items-center gap-2">
+            <h1 
+              class="text-xl md:text-2xl leading-none bg-gradient-to-r from-[#00C4CC] to-[#7D2AE8] bg-clip-text text-transparent pr-2"
+              style="font-family: 'Satisfy', cursive;"
+            >
+              Tass
+            </h1>
+            <div class="w-1 h-6 md:h-8 bg-gradient-to-b from-[#00C4CC] to-[#7D2AE8] rounded-full shadow-[0_0_10px_rgba(0,196,204,0.2)]"></div>
+          </div>
         </div>
+
+        <main class="w-full mt-2 flex-1">
+          <NotesPanel :isOpen="showNotes" @toggle="showNotes = !showNotes" @close="showNotes = false" />
+
+          <!-- Quadro Kanban Principal -->
+          <TaskBoard 
+            :boardColumns="boardColumns"
+            :isDraggingTask="isDraggingTask"
+            @update-board="handleBoardChange"
+            @edit-task="openEditModal"
+            @toggle-completion="toggleTaskCompletion"
+            @delete-task="deleteTask"
+            @drag-start="handleDragStart"
+            @drag-end="handleDragEnd"
+            @open-time-adjustment="openTimeAdjustment"
+          />
+        </main>
       </div>
 
-      <main class="w-full mt-2 flex-1">
-        <NotesPanel :isOpen="showNotes" @toggle="showNotes = !showNotes" @close="showNotes = false" />
+      <!-- Camada de Interface: Global Dock e Task Context Menu -->
+      <div class="pointer-events-none">
+        <!-- Menu de Contexto da Tarefa -->
+        <transition 
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95"
+          enter-to-class="opacity-100 scale-100"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100"
+          leave-to-class="opacity-0 scale-95"
+        >
+          <TaskContextMenu 
+            v-if="taskStore.selectedTask"
+            :task="taskStore.selectedTask"
+            @close="taskStore.selectedTask = null"
+            @edit="openEditModal(taskStore.selectedTask)"
+            @toggle-completion="() => { toggleTaskCompletion(taskStore.selectedTask); taskStore.selectedTask = null; }"
+            @delete="() => { taskStore.deleteTask(taskStore.selectedTask.id); taskStore.selectedTask = null; }"
+            @adjust-time="() => { openTimeAdjustment(taskStore.selectedTask); taskStore.selectedTask = null; }"
+          />
+        </transition>
 
-        <!-- Quadro Kanban Principal -->
-        <TaskBoard 
-          :boardColumns="boardColumns"
-          :isDraggingTask="isDraggingTask"
-          @update-board="handleBoardChange"
-          @edit-task="openEditModal"
-          @toggle-completion="toggleTaskCompletion"
-          @delete-task="deleteTask"
-          @drag-start="handleDragStart"
-          @drag-end="handleDragEnd"
-          @open-time-adjustment="openTimeAdjustment"
-        />
-      </main>
-    </div>
+        <!-- Global Dock -->
+        <transition 
+          enter-active-class="transition duration-500 ease-out"
+          enter-from-class="translate-y-20 opacity-0 scale-95"
+          enter-to-class="translate-y-0 opacity-100 scale-100"
+          leave-active-class="transition duration-300 ease-in"
+          leave-from-class="translate-y-0 opacity-100 scale-100"
+          leave-to-class="translate-y-20 opacity-0 scale-95"
+        >
+          <GlobalDock 
+            v-if="!taskStore.selectedTask || settings.contextMenuMode === 'stack' || settings.contextMenuStyle === 'floating'"
+            @add-task="openAddModal"
+            @open-sprints="openSprintsFromDock"
+            @open-notes="showNotes = !showNotes"
+            @open-interface="openInterfaceFromDock"
+            @open-settings="openSettingsFromDock"
+            @toggle-theme="toggleTheme"
+            @open-radio="handleToggleRadio"
+          />
+        </transition>
+      </div>
 
-    <!-- Camada de Interface: Global Dock e Task Context Menu -->
-    <div class="pointer-events-none">
-      <!-- Menu de Contexto da Tarefa -->
-      <transition 
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-      >
-        <TaskContextMenu 
-          v-if="taskStore.selectedTask"
-          :task="taskStore.selectedTask"
-          @close="taskStore.selectedTask = null"
-          @edit="openEditModal(taskStore.selectedTask)"
-          @toggle-completion="() => { toggleTaskCompletion(taskStore.selectedTask); taskStore.selectedTask = null; }"
-          @delete="() => { taskStore.deleteTask(taskStore.selectedTask.id); taskStore.selectedTask = null; }"
-          @adjust-time="() => { openTimeAdjustment(taskStore.selectedTask); taskStore.selectedTask = null; }"
-        />
-      </transition>
+      <!-- 4. Modal Layer -->
+      <TaskModal 
+        v-if="showModal" 
+        :taskToEdit="taskToEdit"
+        @close="showModal = false" 
+        @add-task="handleAddTask" 
+        @save-task="handleSaveTask"
+      />
 
-      <!-- Global Dock -->
-      <transition 
-        enter-active-class="transition duration-500 ease-out"
-        enter-from-class="translate-y-20 opacity-0 scale-95"
-        enter-to-class="translate-y-0 opacity-100 scale-100"
-        leave-active-class="transition duration-300 ease-in"
-        leave-from-class="translate-y-0 opacity-100 scale-100"
-        leave-to-class="translate-y-20 opacity-0 scale-95"
-      >
-        <GlobalDock 
-          v-if="!taskStore.selectedTask || settings.contextMenuMode === 'stack' || settings.contextMenuStyle === 'floating'"
-          @add-task="openAddModal"
-          @open-sprints="showSprints = true"
-          @open-notes="showNotes = !showNotes"
-          @open-interface="showInterfaceMenu = true"
-          @open-settings="showSettings = true"
-          @toggle-theme="toggleTheme"
-          @open-radio="handleToggleRadio"
-        />
-      </transition>
-    </div>
+      <TimeAdjustmentModal
+        v-if="showTimeAdjustment"
+        :key="taskForTimeAdjustment?.id"
+        :task="taskForTimeAdjustment"
+        @close="showTimeAdjustment = false"
+      />
 
-    <!-- 4. Modal Layer -->
-    <TaskModal 
-      v-if="showModal" 
-      :taskToEdit="taskToEdit"
-      @close="showModal = false" 
-      @add-task="handleAddTask" 
-      @save-task="handleSaveTask"
-    />
+      <SettingsModal
+        v-if="showSettings"
+        :initialTab="settingsInitialTab"
+        @close="showSettings = false"
+        @open-interface="() => { showSettings = false; showInterfaceMenu = true; }"
+        @save="() => {}"
+        @test-wellness="triggerWellness(true)"
+        @test-modal="handleTestModal"
+        @export-tasks="handleExportTasks"
+        @import-tasks="handleImportTasks"
+        @export-system="handleExportSystem"
+        @import-system="handleImportSystem"
+      />
 
-    <TimeAdjustmentModal
-      v-if="showTimeAdjustment"
-      :key="taskForTimeAdjustment?.id"
-      :task="taskForTimeAdjustment"
-      @close="showTimeAdjustment = false"
-    />
+      <SprintModal
+        v-if="showSprints"
+        :activeSprintId="settings.activeSprintId"
+        :initialShowAddForm="sprintInitialShowAddForm"
+        @close="showSprints = false"
+        @select-sprint="(id) => settings.activeSprintId = id"
+        @updated="taskStore.loadSprints"
+      />
 
-    <SettingsModal
-      v-if="showSettings"
-      @close="showSettings = false"
-      @open-interface="() => { showSettings = false; showInterfaceMenu = true; }"
-      @save="() => {}"
-      @test-wellness="triggerWellness(true)"
-      @test-modal="handleTestModal"
-      @export-tasks="handleExportTasks"
-      @import-tasks="handleImportTasks"
-      @export-system="handleExportSystem"
-      @import-system="handleImportSystem"
-    />
+      <InterfaceMenu
+        v-if="showInterfaceMenu"
+        :isOpen="showInterfaceMenu"
+        :initialTab="interfaceInitialTab"
+        @close="showInterfaceMenu = false"
+        @open-settings="() => { showInterfaceMenu = false; showSettings = true; }"
+      />
 
-    <SprintModal
-      v-if="showSprints"
-      :activeSprintId="settings.activeSprintId"
-      @close="showSprints = false"
-      @select-sprint="(id) => settings.activeSprintId = id"
-      @updated="taskStore.loadSprints"
-    />
+      <RadioPlayer
+        :isOpen="showRadio"
+        @close="showRadio = false"
+      />
 
-    <InterfaceMenu
-      v-if="showInterfaceMenu"
-      :isOpen="showInterfaceMenu"
-      @close="showInterfaceMenu = false"
-      @open-settings="() => { showInterfaceMenu = false; showSettings = true; }"
-    />
+      <WellnessToast 
+        :message="currentMessage" 
+        :show="showMessage" 
+      />
 
-    <RadioPlayer
-      :isOpen="showRadio"
-      @close="showRadio = false"
-    />
+      <WelcomeModal
+        v-if="showWelcome"
+        @close="showWelcome = false"
+        @select-shortcut="handleWelcomeShortcut"
+      />
+    </template>
 
     <NotificationContainer />
     <GlobalModal />
 
-    <WellnessToast 
-      :message="currentMessage" 
-      :show="showMessage" 
+    <AuthOverlay 
+      v-if="!authStore.isAuthenticated"
+      @auth-success="initializeAppData"
     />
   </div>
   <div v-else class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">

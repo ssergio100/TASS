@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { db } from '../db';
+import { useAuthStore } from './authStore';
 import { notificationService } from '../services/notificationService';
 
 export const useRadioStore = defineStore('radio', () => {
@@ -37,14 +37,14 @@ export const useRadioStore = defineStore('radio', () => {
   const currentRadio = computed(() => radios.value.find(r => r.id === currentRadioId.value) || radios.value[0] || null);
 
   const init = async () => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      radios.value = [];
+      return;
+    }
+    
     try {
-      if (!db.radios) {
-        console.warn('Tabela radios não encontrada. Pressione F5 para atualizar o banco de dados.');
-        notificationService.toast('Atualize a página (F5) para ativar a Rádio.', 'warning');
-        return;
-      }
-      
-      let savedRadios = await db.radios.toArray();
+      let savedRadios = await authStore.request('/api/radios');
       // Garante que todas as rádios tenham a propriedade stars (migração)
       savedRadios = savedRadios.map(r => ({ ...r, stars: r.stars || 0 }));
       
@@ -63,7 +63,7 @@ export const useRadioStore = defineStore('radio', () => {
       }
     } catch (err) {
       console.error('Erro ao inicializar radioStore:', err);
-      notificationService.toast('Erro na rádio. Tente dar F5 na página.', 'error');
+      notificationService.toast('Erro ao carregar rádios.', 'error');
     }
   };
 
@@ -153,8 +153,13 @@ export const useRadioStore = defineStore('radio', () => {
   };
 
   const rateRadio = async (id, stars) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
     try {
-      await db.radios.update(id, { stars });
+      await authStore.request(`/api/radios/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ stars })
+      });
       const radio = radios.value.find(r => r.id === id);
       if (radio) {
         radio.stars = stars;
@@ -167,16 +172,30 @@ export const useRadioStore = defineStore('radio', () => {
   };
 
   const addRadio = async (radio) => {
-    const id = await db.radios.add({ ...radio, stars: 0 });
-    const newRadio = { ...radio, id, stars: 0 };
-    radios.value.push(newRadio);
-    radios.value.sort((a, b) => b.stars - a.stars);
-    notificationService.toast('Rádio adicionada com sucesso!', 'success');
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+    try {
+      const newRadio = await authStore.request('/api/radios', {
+        method: 'POST',
+        body: JSON.stringify({ ...radio, stars: 0 })
+      });
+      radios.value.push(newRadio);
+      radios.value.sort((a, b) => b.stars - a.stars);
+      notificationService.toast('Rádio adicionada com sucesso!', 'success');
+    } catch (err) {
+      console.error('Failed to add radio', err);
+      notificationService.toast('Erro ao adicionar rádio.', 'error');
+    }
   };
 
   const updateRadio = async (id, data) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
     try {
-      await db.radios.update(id, data);
+      await authStore.request(`/api/radios/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
       const index = radios.value.findIndex(r => r.id === id);
       if (index !== -1) {
         radios.value[index] = { ...radios.value[index], ...data };
@@ -193,20 +212,29 @@ export const useRadioStore = defineStore('radio', () => {
   };
 
   const deleteRadio = async (id) => {
-    await db.radios.delete(id);
-    radios.value = radios.value.filter(r => r.id !== id);
-    
-    // Se apagou a rádio que estava tocando, pausa e foca na primeira.
-    if (currentRadioId.value === id) {
-       pause();
-       if (radios.value.length > 0) {
-         currentRadioId.value = radios.value[0].id;
-         audio.src = radios.value[0].url;
-       } else {
-         currentRadioId.value = null;
-       }
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
+    try {
+      await authStore.request(`/api/radios/${id}`, {
+        method: 'DELETE'
+      });
+      radios.value = radios.value.filter(r => r.id !== id);
+      
+      // Se apagou a rádio que estava tocando, pausa e foca na primeira.
+      if (currentRadioId.value === id) {
+         pause();
+         if (radios.value.length > 0) {
+           currentRadioId.value = radios.value[0].id;
+           audio.src = radios.value[0].url;
+         } else {
+           currentRadioId.value = null;
+         }
+      }
+      notificationService.toast('Rádio excluída.', 'success');
+    } catch (err) {
+      console.error('Failed to delete radio', err);
+      notificationService.toast('Erro ao excluir rádio.', 'error');
     }
-    notificationService.toast('Rádio excluída.', 'success');
   };
 
   return {
