@@ -32,3 +32,4 @@ dist-ssr
 .claude/
 auditoria.md
 MEMORY.md
+tass.db

@@ -1,0 +1,126 @@
+[33mde16e4d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mSASS2[m[33m)[m style(radio): refatora validacao e adiciona cabecalho compacto nos modais de radio
+[33mb26a0e7[m style: remove subtitle and custom icon color from RadioPlayer to match other modals
+[33m9c70457[m refactor: simplify RadioPlayer layout using standard BaseModal and fix template syntax errors
+[33mce8d371[m feat: login do Google exclusivo e boas-vindas interativo
+[33m04171af[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/SASS2[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #2 from ssergio100/unified-design-system
+[33m822e111[m[33m ([m[1;31morigin/unified-design-system[m[33m, [m[1;32munified-design-system[m[33m)[m refactor: stack context menu radios vertically within two columns for better readability
+[33m995d095[m Ajsutes nas diretrizes do GEMINI.md
+[33m3b8226e[m chore: eliminate all local physical wallpaper support and migrate to 100% URL-based system
+[33m7447484[m chore: remove deprecated google drive wallpaper integration and sanitize codebase
+[33m7d22557[m Ajustes gerais na de interface
+[33m6679344[m style: padroniza inputs e refatora comportamento visual do ajuste de tempo
+[33mb8cfe14[m Eliminada a possibilidade de baixar papeis de parede do google diver
+[33m4b016b1[m refactor(modals): unifica layout de duas colunas no BaseModal.vue com layout='sidebar' unificando os rodapés com classes dinâmicas para evitar duplicidades; refatora TaskModal.vue, SettingsModal.vue e InterfaceMenu.vue para usar os slots correspondentes e resolve tag div pendente no SettingsModal; atualiza especificações de modais e a checklist de verificação no GEMINI.md
+[33m5332159[m fix(terminal): implementar compatibilidade cross-platform no backend para suportar execução de comandos Unix e Windows e atualizar documentação de rotas da API
+[33mb9f7cf1[m feat(interface): restaurar controles de tamanho de título e descrição de tarefas no InterfaceMenu.vue e adicionar seção de prevenção de regressões visuais e funcionais com checklist de verificação obrigatória no GEMINI.md
+[33mc53e7a9[m docs(gemini): add security recommendations section for local backend development
+[33m919b146[m security(backend): fix local RCE via CORS and wallpaper delete path traversal
+[33mcada317[m fix(terminal): ensure terminal input is automatically focused after command execution
+[33me714c73[m refactor(shortcuts): restrict global hotkeys except escape when notes panel is open
+[33m6afe962[m refactor(shortcuts): simplify keyboard shortcuts to toggle notes panel using only key t
+[33mb4da382[m feat(terminal): emulador de terminal interativo no NotesPanel integrado ao server.js
+[33mb308d74[m Alteraçãode label do botao salvaar
+[33m0dd6d2e[m fix(ui): restore modal blur toggle and fix background transparency logic
+[33m02b7d68[m style(ui):standardize modal colors using app-solid token to match system background
+[33mb00e09b[m Retorno do botao salvar do modal de configuracoes
+[33m5c7fc50[m Recuperado campos de conectividade
+[33m3fe0aad[m style: unify TaskModal footer architecture with SettingsModal, moving it to a global position and
+[33m983b658[m feat: segment modal transparency settings into Sidebar, Body, and Header/Footer for granular visual  control and VA monitor optimization
+[33m6e43564[m style: refactor modal architecture to unify global headers, implement dynamic tab-based titles, and
+[33m6dddd1d[m Indicador de status do serevr
+[33ma4fb7c6[m Opcao para desabilitar o esmaecimento do fundo quando no modo escuro
+[33mcc40a8c[m Correcao no stilo do modal de configuracoes, credenciais do gitlab
+[33m51057a8[m Papeis de parede localizados internamente, sem requisicões externas
+[33m19a389e[m Criado um server para executar tarefas que o front nao pode
+[33m8f8d2e8[m Merge pull request #1 from ssergio100/unified-design-system
+[33ma7febd2[m docs(readme): revitaliza documentação com foco em design engine e agilidade adaptável, simplifica sistema de rádio removendo metadados e proxy instáveis, realiza faxina geral removendo código morto e referências obsoletas ao favicon, evolui esquema do banco de
+[33m397ad9e[m feat(config): redesenha aba de segurança com layout unificado, implementa exibição de perfil do Google com foto e nome, refatora importação de tarefas para merge seguro com reset de IDs e sprints, e migra ajuste de
+[33m291c6cc[m Implementado backup no google driver
+[33m0f0b6de[m Melhora nos tolltips
+[33mceb5c0c[m Ajuste de timer
+[33m5508b73[m Ajustes diversos
+[33md68d4ef[m Server para pegar dados da radio
+[33ma6ed0b6[m feat(backend): implement local node proxy for      radio metadata and add production server
+[33mf96c102[m fix(context-menu): resolve syntax error and      restore script functionality
+[33m6a0d0da[m style(board): reduce vertical margins and min-height to optimize tasks positioning
+[33mfbf88d7[m Adequaçao d do modal com formulario para cadastro de nova radio
+[33mdecef70[m style(dock): apply reactive system transparency to task filter backgrounds
+[33mc79c19f[m style: document border tokens and restore sober colors
+[33m4db272f[m style: unify interface dividers using semantic border
+[33ma820bbc[m Padronizacão dos estilos dos botoes das bases dos modais
+[33mdd0e5c7[m feat(radio): enable web radio editing | Refactored RadioModal for hybrid use | Added live URL testing with Audio API | Repositioned test button for better UX | Fixed false error feedback on test stop | Added edit
+[33mb56db18[m Mais testes
+[33mb6605c8[m IMplementado testes
+[33m863c4cc[m feat(ui): implement OS-style floating context menu with vertical layout, dynamic positioning at cursor, and full coexistence with Global Dock, while restoring all right-click
+[33m2140a4e[m docs: codify engineering and UI standards in .cursorrules
+[33me369915[m feat(ui/ux): ilha dinâmica, janelas persistentes e gestão avançada de tempo
+[33m75ef022[m feat: janelas flutuantes persistentes e gestão avançada de tempo
+[33m9761bec[m feat(radio): implement persistent player and media session integration
+[33m661f1fc[m style(ui): demonstrate single-file global control by realigning all modal buttons to the right
+[33ma9b6a55[m feat(ui): centralize modal footer buttons logic in BaseModal for global alignment control
+[33mffca06f[m refactor(ui): unify secondary button styles across all modals and fix hardcoded radii in CSS
+[33m4d6c9c1[m refactor(radio): padronizar interface do player e aplicar política zero hardcoded nas regras
+[33m6387dcc[m fix(radio): standardize close button style to match global modals
+[33m70b3818[m feat(radio): unify volume control into a full-width bar with percentage indicator
+[33m051d7c3[m feat(radio): migra para BaseModal com header customizado discreto, implementa sistema de estrelas com ordenação automática, reduz escala visual com lista sanfonada e remove permanentemente rádios padrão de sistema para uma experiência 100% personalizada.
+[33mf6c68de[m ...:
+[33m4249df7[m chore: blindagem arquitetural e ajustes de interface | atualização do .cursorrules com regras restritas para modais, inputs e opacidade | separação da transição de desfoque no GlobalModal para efeito instantâneo | reintegração dos botões de debug de alertas no SettingsModal
+[33me7aafe5[m refactor(components): abstração de inputs | criação dos componentes base AppInput e AppTextarea fortemente tipados com suporte a ícones, erros e slots customizados | substituição da estrutura verbosa no TaskModal para código limpo e reaproveitável
+[33m92467c3[m style(modals): padronização global | unificação de layout para modais com sidebar (Settings, Interface, Task) | header fixo com botão fechar alinhado via flexbox | remoção de bordas das abas ativas para bg-app-surface | ajuste dinâmico de opacidade e altura sincronizada
+[33m6bff252[m refactor(TaskModal): standardize layout | apply compact sticky header | fix active tab ring | sync heights and dynamic opacity with Settings/Interface modals
+[33mc8436ba[m style(modals): add compact sticky section header to SettingsModal and InterfaceMenu | remove redundant h3/p from tab content | recover vertical space for config area
+[33m217fd6e[m style(nav): remove ring border from active tab and unify selected/hover bg-app-surface in SettingsModal and InterfaceMenu
+[33ma05dfc9[m Padronizacao sos menus
+[33m49cf9e9[m feat(interface): consolidar design system com tokens semânticos, corrigir bugs de contraste/transparência e implementar persistência de estado das janelas via localStorage.
+[33m9e65648[m feat(design-system): unificar arquitetura visual com tokens semânticos e corrigir bugs de contraste, transparência e corte de texto no TaskCard.
+[33m7df48e5[m feat(design-system): implementar obrigatoriedade de tokens semânticos no .cursorrules e unificar sistema visual em todos os componentes principais.
+[33m960c02e[m feat(design-system): implementar sistema de tokens semânticos e unificação visual (style.css, tailwind.config, Toasts, Dock, Modais e Cards) garantindo contraste premium e transparência reativa.
+[33ma9b2171[m feat(design-system): implementar sistema de tokens semânticos e unificação visual (style.css, tailwind.config, Toasts, Dock, Modais e Cards) garantindo contraste premium e transparência reativa.
+[33m20527c0[m no message
+[33m73476b7[m[33m ([m[1;32mmain[m[33m)[m No message
+[33m0c628c1[m fix(ui): unify glass effect in BaseModal
+[33m51ffc96[m feat(ui): adicionar numeracao de linhas no NotesPanel
+[33me6038ae[m feat(ui): adicionar controle visual para o lado do painel de notas
+[33m4a574c3[m feat(gitlab): implementacao de merge automatico | Adicionado botao GitPullRequest no TaskContextMenu | Criado fluxo de MR temporario para analise de conflitos | Alerta detalhado de branches conflitantes | Corrigido falso positivo extraindo nome exato da URL | Tratamento para diferencas vazias e erros 404 na comparacao
+[33m1a2cef7[m Remoção de script para geração de tarefas para testes
+[33me8d73e3[m style: padronização da transparência (0=Sólido, 100=Transparente), correção do cálculo de opacidade, remoção de blur residual em 0% e unificação visual entre todos os componentes do sistema.
+[33mcdc4a47[m style(board): expansão das áreas de arraste e alinhamento de colunas para melhor experiência de drop
+[33m876b472[m style(ui): padronização de arredondamento reativo com live preview; herança visual na GlobalDock, TaskContextMenu e SprintModal; refatoração do rodapé do SettingsModal; estabilização de performance com requestAnimationFrame e uniformização global de inputs via CSS.
+[33m74688ad[m style(ui): finalização da interface - Novos alertas modernizados e restauração do SettingsModal original
+[33m7b63b7f[m style(ui): ajuste de contraste no menu do SettingsModal - Escurecidas as fontes não ativas para text-slate-700 e adicionado hover color dinâmico
+[33mb4b48f8[m chore(deps): remoção completa do SweetAlert2 - Desinstalada biblioteca e removidos estilos CSS órfãos, unificando o sistema de feedback no Tailwind nativo
+[33mfc02a7d[m style(ui): sincronização perfeita das proporções do modal com Tailwind UI - Configurada fonte Inter e classes de escala oficiais (text-base, text-sm, px-3 py-2)
+[33m3626188[m style(ui): downscale global modal for professional proportions - Reduced font sizes, paddings, and widths to match target aesthetics
+[33m928fc12[m feat(ui): complete removal of SweetAlert2 - Replaced with custom native Tailwind UI modals and prompts with full glassmorphism integration
+[33m85cc619[m feat(ui): finalize modern top-center notifications with dynamic transparency and glassmorphism
+[33mf90e5da[m style: fix toast transparency and link it to modal opacity settings; refine Escape key behavior and terminal focus
+[33mfad5512[m feat(terminal): final modernization of Notes component - Integrated Terminal UI with persistent multi-color support, auto-focus at text end, and global Escape key for modal/selection cleanup
+[33m6245e1a[m refactor(ux): enhance terminal adaptivity and keyboard workflow - Implemented light/dark theme support for Notes Terminal, added auto-focus at end of text, fixed persistent focus bug on close, and mapped Escape key to close all system modals globally
+[33m72957a4[m feat(notes): comprehensive redesign to Terminal CLI with rich color persistence - Transformed NotesPanel into a modern CLI interface with Glassmorphism, added interactive window controls for color switching, implemented HTML persistence for multi-colored text, and cleaned up legacy settings
+[33m3d5ed7b[m fix(board): eliminate drag-and-drop flicker
+[33m175c19d[m feat(ui): implement intelligent contrast engine
+[33m8376789[m Update arquivo de memoria
+[33md640c7d[m refactor: aprimora UX mobile com rolagem horizontal, corrige validação de URLs complexas, remove configurações obsoletas de ícones e   refina posicionamento da marca e layout do board.
+[33m83ec16b[m Correção da rolagem entre colunas. Estava verticar e não horizontal
+[33m88d4453[m Limpeza
+[33m974d55a[m Ajustes diversos
+[33m852d01a[m refactor: rebranding técnico de 'tass-' para 'app-' em estilos e serviços; restauração e refinamento de tooltips premium no TaskContextMenu para GitLab, Notas e Ambientes; simplificação da linguagem da interface removendo termos formais como 'Cadastrar'; estabilização de z-index dos calendários com teleport='body'; instalação do date-fns e implementação da localização industrial ptBR completa para dias e meses no SprintModal e SettingsModal.
+[33me542e61[m fix: resolve drag-and-drop lag and freezing; refactor TaskBoard to use :list instead of v-model for prop stability; disable conflicting CSS transitions during drag; enable force-fallback and fallback-on-body for smooth traveling card preview; clean up unused store methods
+[33mb0858e6[m refactor: overhaul UI with TaskContextMenu and GlobalDock; simplify TaskCard to minimal design; implement binary interface swap (Sun/Moon); update taskStore for better reactivity; enhance quick action modals with textarea and empty field support; clean up obsolete CSS; ensure full mobile responsiveness
+[33mb9aff56[m Melhoria no espaçamento da area de transferencia
+[33mb9bc088[m fix: corrige erro de sintaxe no App.vue e estabiliza layout global
+[33m820a075[m fix(core/arch): corrigir lógica invertida e threshold fixo de inatividade no taskStore, persistência de booleanos no settingsStore e   reatividade na troca de sprints; refatorar arquitetura centralizando filtros e colunas na store, extraindo componente TaskBoard para   simplificar o App.vue e desacoplando o TaskCard ao mover ações rápidas e modais SweetAlert para o novo taskActionService.js;   corrigida duplicidade de código e erros de sintaxe no taskStore.js garantindo estabilidade e escalabilidade do projeto.
+[33m4e82a13[m fix(settings): corrigir lógica invertida de inatividade no taskStore, aplicar threshold configurado e garantir persistência de   valores booleanos no settingsStore
+[33m95e7bff[m feat(health): unifica hidratação ao sistema de sussurros, remove alerta de água standalone e resolve DataCloneError
+[33m2957a21[m fix(settings): resolver falha na exclusão e impedir reinjeção de wallpapers
+[33m64d363a[m feat(core): evolução sistêmica da interface, integridade de dados e UX imersiva
+[33m246811a[m feat(security): implementar funcionalidade de Reset de Fábrica e Purga de Dados
+[33md6663c6[m style(ui): restaurar cor preta clássica para tooltips
+[33m6ca6c93[m refactor(ui): reconstrução estrutural e otimização responsiva total
+[33m11b75a6[m style(ui): remover indicador redundante de tarefa ativa da barra inferior
+[33m1c237d2[m style(card): unificar visual da tarefa ativa com a barra inferior
+[33m07fe762[m feat(card): padronizar cores do contador dinâmico e layout contextual
+[33m86033f1[m feat(card): implementar layout contextual dinâmico com troca de informações
+[33m057e5bc[m refactor(gitlab): automatizar workflow de branches e refinar usabilidade do card
+[33m5f7f0ff[m feat(kanban): implementar board multi-colunas com UX premium e persistência
+[33m2a7d047[m feat(kanban): implementar sistema de colunas flexíveis com UX avançada
