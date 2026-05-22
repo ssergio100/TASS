@@ -33,3 +33,5 @@ dist-ssr
 auditoria.md
 MEMORY.md
 tass.db
+sass.db
+*.db
