@@ -1,12 +1,20 @@
 <script setup>
 import { 
-  AlertTriangle, CheckCircle, Info, XCircle, X 
+  AlertTriangle, CheckCircle, Info, XCircle, X, Copy 
 } from 'lucide-vue-next';
 import { ref, watch, nextTick } from 'vue';
 import { useModalStore } from '../stores/modalStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useClipboard } from '@vueuse/core';
 
 const modalStore = useModalStore();
+const { copy, copied } = useClipboard();
+
+const handleCopy = () => {
+  if (modalStore.promptValue) {
+    copy(modalStore.promptValue);
+  }
+};
 const settings = useSettingsStore();
 const inputRef = ref(null);
 
@@ -103,7 +111,7 @@ watch(() => modalStore.isOpen, (newVal) => {
                   <h3 class="text-base font-semibold text-slate-900 dark:text-white" id="modal-title">
                     {{ modalStore.title }}
                   </h3>
-                  <div class="mt-2">
+                  <div v-if="modalStore.message" class="mt-2">
                     <p class="text-sm text-slate-500 dark:text-slate-400">
                       {{ modalStore.message }}
                     </p>
@@ -161,6 +169,16 @@ watch(() => modalStore.isOpen, (newVal) => {
                 @click="modalStore.handleCancel"
               >
                 {{ modalStore.cancelText }}
+              </button>
+
+              <button 
+                v-if="modalStore.isPrompt && modalStore.promptType === 'textarea'"
+                type="button" 
+                class="mt-3 sm:mt-0 sm:mr-auto inline-flex w-full justify-center items-center rounded-xl bg-white dark:bg-white/5 px-3 py-2 text-sm font-semibold text-blue-500 hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-95 sm:w-auto border border-app-border-light"
+                @click="handleCopy"
+              >
+                <component :is="copied ? CheckCircle : Copy" class="size-4 mr-2" />
+                {{ copied ? 'Copiado!' : 'Copiar' }}
               </button>
             </div>
           </div>

@@ -16,7 +16,7 @@ export const taskActionService = {
 
     const newValue = await notificationService.prompt({
       title: label,
-      message: `Informe o ${label.toLowerCase()} abaixo`,
+      message: isTextArea ? '' : `Informe o ${label.toLowerCase()} abaixo`,
       value: currentValue,
       placeholder: type === 'url' ? 'https://...' : 'Escreva aqui...',
       promptType: isTextArea ? 'textarea' : 'text',
