@@ -5,15 +5,23 @@ import ColorWheelPicker from '../components/ColorWheelPicker.vue';
 import { ArrowLeft, Beaker } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useTaskStyleStore } from '../stores/taskStyleStore';
+import { hexToRgba } from '../utils/colors';
 
 const router = useRouter();
 const taskStyleStore = useTaskStyleStore();
 
 const containerWidth = ref(400);
+const harmonyRule = ref('analogous');
 
-// Cores reativas iniciais (Título e Fundo) - Ambas as rodas são independentes
-const titleColor = ref({ h: 210, s: 80, l: 50, hex: '#1e88e5' });
-const bgColor = ref({ h: 210, s: 40, l: 15, hex: '#121c24' });
+// Paleta reativa (Adobe Style)
+const palette = ref([
+  { h: 210, s: 80, l: 50, hex: '#1e88e5', css: 'hsl(210, 80%, 50%)' }
+]);
+
+// Cores congeladas aplicadas no card
+const appliedTitleHex = ref('#1e88e5');
+const appliedBgHex = ref('#121c24');
+const appliedTextHex = ref('#1e88e5');
 
 const mockTask = ref({
   id: 'TASK-LAB',
@@ -40,17 +48,12 @@ const mockTask = ref({
 const updateLabPreset = () => {
   const preset = taskStyleStore.styles.find(s => s.id === '_lab_preset');
   if (preset) {
-    preset.colors.color = titleColor.value.hex;
-    preset.colors.bgColor = bgColor.value.hex;
-    preset.colors.textLightColor = titleColor.value.hex;
-    preset.colors.textDarkColor = titleColor.value.hex;
+    preset.colors.color = appliedTitleHex.value;
+    preset.colors.bgColor = appliedBgHex.value;
+    preset.colors.textLightColor = appliedTextHex.value;
+    preset.colors.textDarkColor = appliedTextHex.value;
   }
 };
-
-// Sincroniza o preset quando qualquer uma das cores mudarem de forma independente
-watch([titleColor, bgColor], () => {
-  updateLabPreset();
-}, { deep: true });
 
 onMounted(async () => {
   // Carrega os estilos se ainda não foram carregados
@@ -106,20 +109,77 @@ onUnmounted(() => {
     <!-- Container do Laboratório -->
     <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       <!-- Coluna da Esquerda: Seletores Cromáticos Livres -->
-      <div class="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-6 items-center w-full justify-center">
-        <!-- Roda 1: Cor do Título -->
+      <div class="lg:col-span-5 flex flex-col gap-6 items-center w-full justify-center">
+        
+        <!-- Controle de Harmonia -->
+        <div class="w-full max-w-[260px]">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Regra de Harmonia (Adobe Style)</label>
+          <select v-model="harmonyRule" class="app-input w-full px-3 py-2 text-xs">
+            <option value="analogous">Análoga</option>
+            <option value="monochromatic">Monocromática</option>
+            <option value="triad">Tríade</option>
+            <option value="complementary">Complementar</option>
+            <option value="split-complementary">Complementar Dividida</option>
+            <option value="square">Quadrado</option>
+          </select>
+        </div>
+
+        <!-- Roda de Harmonia -->
         <ColorWheelPicker 
-          label="Cor do Título / Destaque"
-          v-model="titleColor"
-          :showComplementary="true"
+          label="Paleta de Cores Gerada"
+          v-model="palette"
+          :rule="harmonyRule"
         />
 
-        <!-- Roda 2: Cor do Fundo -->
-        <ColorWheelPicker 
-          label="Cor de Fundo do Card"
-          v-model="bgColor"
-          :showComplementary="true"
-        />
+        <!-- Blocos de Aplicação da Paleta -->
+        <div class="flex flex-col gap-5 w-full max-w-[260px] bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 glass-panel">
+          
+          <!-- Bloco 1: Título e Ícones -->
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block border-b border-slate-500/10 pb-1">1. Título e Ícones</span>
+            <div class="flex gap-2 justify-center">
+              <button 
+                v-for="(color, idx) in palette" :key="'title-swatch-'+idx"
+                class="w-7 h-7 rounded-full border-2 shadow-sm transition-transform hover:scale-110 active:scale-95"
+                :class="appliedTitleHex === color.hex ? 'border-indigo-500 scale-110' : 'border-white/20'"
+                :style="{ backgroundColor: color.css }"
+                :title="'Aplicar ao Título: ' + color.hex"
+                @click="appliedTitleHex = color.hex; updateLabPreset()"
+              ></button>
+            </div>
+          </div>
+
+          <!-- Bloco 2: Fundo -->
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block border-b border-slate-500/10 pb-1">2. Fundo do Card</span>
+            <div class="flex gap-2 justify-center">
+              <button 
+                v-for="(color, idx) in palette" :key="'bg-swatch-'+idx"
+                class="w-7 h-7 rounded-full border-2 shadow-sm transition-transform hover:scale-110 active:scale-95"
+                :class="appliedBgHex === color.hex ? 'border-indigo-500 scale-110' : 'border-white/20'"
+                :style="{ backgroundColor: color.css }"
+                :title="'Aplicar ao Fundo: ' + color.hex"
+                @click="appliedBgHex = color.hex; updateLabPreset()"
+              ></button>
+            </div>
+          </div>
+
+          <!-- Bloco 3: Texto -->
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block border-b border-slate-500/10 pb-1">3. Texto / Descrição</span>
+            <div class="flex gap-2 justify-center">
+              <button 
+                v-for="(color, idx) in palette" :key="'text-swatch-'+idx"
+                class="w-7 h-7 rounded-full border-2 shadow-sm transition-transform hover:scale-110 active:scale-95"
+                :class="appliedTextHex === color.hex ? 'border-indigo-500 scale-110' : 'border-white/20'"
+                :style="{ backgroundColor: color.css }"
+                :title="'Aplicar ao Texto: ' + color.hex"
+                @click="appliedTextHex = color.hex; updateLabPreset()"
+              ></button>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- Coluna da Direita: Arena de Preview do TaskCard -->
@@ -166,10 +226,10 @@ onUnmounted(() => {
           <pre class="bg-slate-900/50 dark:bg-slate-950/50 p-4 rounded-xl font-mono text-[11px] text-indigo-500 dark:text-indigo-400 overflow-x-auto">
 {
   "colors": {
-    "color": "{{ titleColor.hex }}",
-    "bgColor": "{{ bgColor.hex }}",
-    "textLightColor": "{{ titleColor.hex }}",
-    "textDarkColor": "{{ titleColor.hex }}"
+    "color": "{{ appliedTitleHex }}",
+    "bgColor": "{{ appliedBgHex }}",
+    "textLightColor": "{{ appliedTextHex }}",
+    "textDarkColor": "{{ appliedTextHex }}"
   }
 }</pre>
         </div>

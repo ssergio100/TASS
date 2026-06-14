@@ -1,37 +1,40 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue';
 
+import { generateHarmony } from '../utils/colorHarmonies';
+
 const props = defineProps({
   label: {
     type: String,
     default: 'Seletor de Cor'
   },
-  // Valor reativo correspondente a uma única cor HSL (ex: { h: 210, s: 70, l: 50 })
   modelValue: {
-    type: Object,
-    default: () => ({ h: 210, s: 70, l: 50 })
+    type: Array,
+    default: () => []
   },
-  showComplementary: {
-    type: Boolean,
-    default: true
+  rule: {
+    type: String,
+    default: 'analogous'
   }
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
 
-// Estados reativos locais de matiz, saturação e luminosidade
-const hue = ref(props.modelValue.h ?? 210);
-const saturation = ref(props.modelValue.s ?? 70);
-const lightness = ref(props.modelValue.l ?? 50);
+const hue = ref(props.modelValue?.[0]?.h ?? 210);
+const saturation = ref(props.modelValue?.[0]?.s ?? 70);
+const lightness = ref(props.modelValue?.[0]?.l ?? 50);
 
-// Sincroniza em caso de mudanças vindas de fora (por exemplo, pela sincronização no pai)
 watch(() => props.modelValue, (newVal) => {
-  if (newVal) {
-    hue.value = newVal.h;
-    saturation.value = newVal.s;
-    lightness.value = newVal.l;
+  if (newVal && newVal.length > 0 && newVal[0]) {
+    hue.value = newVal[0].h;
+    saturation.value = newVal[0].s;
+    lightness.value = newVal[0].l;
   }
 }, { deep: true });
+
+watch(() => props.rule, () => {
+  emitColor();
+});
 
 // Função matemática HSL para conversão para Hex
 function hslToHex(h, s, l) {
@@ -47,47 +50,39 @@ function hslToHex(h, s, l) {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-const hexColor = computed(() => hslToHex(hue.value, saturation.value, lightness.value));
-const compHexColor = computed(() => {
-  const compHue = (hue.value + 180) % 360;
-  return hslToHex(compHue, saturation.value, lightness.value);
+const palette = computed(() => {
+  const points = generateHarmony(hue.value, saturation.value, lightness.value, props.rule);
+  return points.map(pt => ({
+    h: pt.h,
+    s: pt.s,
+    l: pt.l,
+    hex: hslToHex(pt.h, pt.s, pt.l),
+    css: `hsl(${pt.h}, ${pt.s}%, ${pt.l}%)`
+  }));
 });
 
-// Emissão da cor atualizada
+const hexColor = computed(() => palette.value[0]?.hex || '#000000');
+
+// Emissão da paleta atualizada
 const emitColor = () => {
-  const colorObj = {
-    h: hue.value,
-    s: saturation.value,
-    l: lightness.value,
-    hex: hexColor.value,
-    compHue: (hue.value + 180) % 360,
-    compHex: compHexColor.value,
-    css: `hsl(${hue.value}, ${saturation.value}%, ${lightness.value}%)`
-  };
-  emit('update:modelValue', colorObj);
-  emit('change', colorObj);
+  emit('update:modelValue', palette.value);
+  emit('change', palette.value);
 };
 
 // Geometria da Roda de Cores (Diâmetro 150px)
 const R_WHEEL = 75;
 const R_TRACK = 55;
 
-// Coordenadas cartesianas do cursor principal
-const cursorCoords = computed(() => {
-  const angleRad = (hue.value * Math.PI) / 180;
-  return {
-    x: R_WHEEL + R_TRACK * Math.cos(angleRad),
-    y: R_WHEEL + R_TRACK * Math.sin(angleRad)
-  };
-});
-
-// Coordenadas cartesianas do cursor complementar
-const compCoords = computed(() => {
-  const angleRad = (((hue.value + 180) % 360) * Math.PI) / 180;
-  return {
-    x: R_WHEEL + R_TRACK * Math.cos(angleRad),
-    y: R_WHEEL + R_TRACK * Math.sin(angleRad)
-  };
+// Coordenadas cartesianas dos cursores
+const paletteCoords = computed(() => {
+  return palette.value.map(pt => {
+    const angleRad = (pt.h * Math.PI) / 180;
+    return {
+      x: R_WHEEL + R_TRACK * Math.cos(angleRad),
+      y: R_WHEEL + R_TRACK * Math.sin(angleRad),
+      color: pt
+    };
+  });
 });
 
 // Arrasto do cursor único
@@ -195,38 +190,27 @@ const lightnessSliderStyle = computed(() => {
       <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 150 150">
         <circle cx="75" cy="75" r="2" fill="rgba(255, 255, 255, 0.4)" />
         
-        <!-- Linha conectando os polos complementares -->
         <line 
-          v-if="showComplementary"
-          :x1="cursorCoords.x" 
-          :y1="cursorCoords.y" 
-          :x2="compCoords.x" 
-          :y2="compCoords.y" 
+          v-for="(pt, idx) in paletteCoords" :key="'line-'+idx"
+          :x1="75" 
+          :y1="75" 
+          :x2="pt.x" 
+          :y2="pt.y" 
           stroke="rgba(255, 255, 255, 0.3)" 
           stroke-dasharray="3,3" 
           stroke-width="1.5" 
         />
       </svg>
 
-      <!-- Cursor Principal (Cor Escolhida) -->
+      <!-- Cursores -->
       <div 
-        class="absolute w-[16px] h-[16px] rounded-full border-2 border-white shadow-[0_2px_6px_rgba(0,0,0,0.6)] cursor-pointer active:scale-110 transition-transform pointer-events-none"
+        v-for="(pt, idx) in paletteCoords" :key="'cursor-'+idx"
+        class="absolute rounded-full border border-white shadow-[0_2px_6px_rgba(0,0,0,0.6)] pointer-events-none transition-all duration-75"
+        :class="idx === 0 ? 'w-[16px] h-[16px] border-2 z-10' : 'w-[10px] h-[10px] border-white/60 z-0 opacity-80'"
         :style="{ 
-          left: `${cursorCoords.x - 8}px`, 
-          top: `${cursorCoords.y - 8}px`,
-          backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)` 
-        }"
-      ></div>
-
-      <!-- Cursor Complementar (Translúcido/Menor) -->
-      <div 
-        v-if="showComplementary"
-        class="absolute w-[10px] h-[10px] rounded-full border border-white/60 shadow-[0_1px_3px_rgba(0,0,0,0.4)] pointer-events-none"
-        :style="{ 
-          left: `${compCoords.x - 5}px`, 
-          top: `${compCoords.y - 5}px`,
-          backgroundColor: `hsl(${(hue + 180) % 360}, ${saturation}%, ${lightness}%)`,
-          opacity: 0.6
+          left: idx === 0 ? `${pt.x - 8}px` : `${pt.x - 5}px`, 
+          top: idx === 0 ? `${pt.y - 8}px` : `${pt.y - 5}px`,
+          backgroundColor: pt.color.css
         }"
       ></div>
     </div>
