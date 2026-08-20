@@ -1,6 +1,6 @@
 <script setup>
 import { ref, useAttrs, onMounted, onUnmounted, computed, nextTick } from 'vue';
-import { ChevronDown } from 'lucide-vue-next';
+import { ChevronDown, Search, X } from 'lucide-vue-next';
 
 defineOptions({
   inheritAttrs: false
@@ -34,13 +34,34 @@ const props = defineProps({
   error: {
     type: String,
     default: ''
+  },
+  searchable: {
+    type: Boolean,
+    default: false
+  },
+  searchPlaceholder: {
+    type: String,
+    default: 'Buscar...'
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  loadingText: {
+    type: String,
+    default: 'Carregando...'
+  },
+  emptyMessage: {
+    type: String,
+    default: 'Nenhuma opção disponível'
   }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'open']);
 const attrs = useAttrs();
 
 const isOpen = ref(false);
+const searchQuery = ref('');
 const containerRef = ref(null);
 const dropdownStyle = ref({
   top: '0px',
@@ -66,6 +87,8 @@ const updatePosition = () => {
 const toggle = () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
+    searchQuery.value = '';
+    emit('open');
     nextTick(() => updatePosition());
   }
 };
@@ -99,7 +122,16 @@ onUnmounted(() => {
 
 const selectedLabel = computed(() => {
   const option = props.options.find(o => o.value === props.modelValue);
-  return option ? option.label : '';
+  return option ? option.label : props.modelValue;
+});
+
+const filteredOptions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return props.options;
+  return props.options.filter(o =>
+    String(o.label || '').toLowerCase().includes(q) ||
+    String(o.value || '').toLowerCase().includes(q)
+  );
 });
 </script>
 
@@ -164,19 +196,46 @@ const selectedLabel = computed(() => {
             width: dropdownStyle.width
           }"
         >
-          <div 
-            v-for="option in options" 
-            :key="option.value"
-            @click="selectOption(option)"
-            class="px-4 py-2.5 text-sm font-medium cursor-pointer transition-all hover:bg-indigo-500/10 flex items-center justify-between"
-            :class="modelValue === option.value ? 'text-indigo-500 bg-indigo-500/5 font-black' : 'text-slate-700 dark:text-slate-300'"
-          >
-            {{ option.label }}
-            <div v-if="modelValue === option.value" class="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+          <div v-if="searchable" class="sticky top-0 z-10 bg-white dark:bg-slate-900 px-3 pt-2 pb-2 border-b border-app-border-light">
+            <div class="relative">
+              <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                v-model="searchQuery"
+                @click.stop
+                type="text"
+                :placeholder="searchPlaceholder"
+                class="w-full app-input pl-9 pr-8 py-2 text-xs rounded-lg"
+              />
+              <button
+                v-if="searchQuery"
+                @click.stop="searchQuery = ''"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X class="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-          <div v-if="options.length === 0" class="px-4 py-3 text-xs text-slate-400 text-center italic">
-            Nenhuma opção disponível
+
+          <div v-if="loading" class="px-4 py-3 text-xs text-slate-400 text-center italic flex items-center justify-center gap-2">
+            <span class="w-3.5 h-3.5 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin"></span>
+            {{ loadingText }}
           </div>
+
+          <template v-else>
+            <div 
+              v-for="option in filteredOptions" 
+              :key="option.value"
+              @click="selectOption(option)"
+              class="px-4 py-2.5 text-sm font-medium cursor-pointer transition-all hover:bg-indigo-500/10 flex items-center justify-between"
+              :class="modelValue === option.value ? 'text-indigo-500 bg-indigo-500/5 font-black' : 'text-slate-700 dark:text-slate-300'"
+            >
+              {{ option.label }}
+              <div v-if="modelValue === option.value" class="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+            </div>
+            <div v-if="filteredOptions.length === 0" class="px-4 py-3 text-xs text-slate-400 text-center italic">
+              {{ emptyMessage }}
+            </div>
+          </template>
         </div>
       </transition>
     </teleport>

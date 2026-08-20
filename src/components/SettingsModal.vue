@@ -168,6 +168,60 @@ const toggleDay = (dayId) => {
 const testGitStatus = ref(null);
 const testGitMessage = ref('');
 
+const githubRepos = ref([]);
+const githubReposLoading = ref(false);
+const githubReposLoaded = ref(false);
+const githubReposError = ref('');
+
+const loadGithubRepos = async (force = false) => {
+  const owner = localSettings.value.githubOwner;
+  const token = localSettings.value.githubToken;
+  if (!owner || !token) {
+    githubRepos.value = [];
+    githubReposError.value = 'Informe o Dono e o Token para listar os repositórios.';
+    return;
+  }
+  if (githubReposLoaded.value && !force) return;
+  githubReposLoading.value = true;
+  githubReposError.value = '';
+  try {
+    const allRepos = [];
+    let page = 1;
+    let hasMore = true;
+    while (hasMore && page <= 10) {
+      const res = await fetch(`https://api.github.com/users/${encodeURIComponent(owner)}/repos?per_page=100&page=${page}&sort=updated`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      });
+      if (!res.ok) throw new Error(`GitHub respondeu com erro HTTP ${res.status}: ${res.statusText}`);
+      const data = await res.json();
+      allRepos.push(...data);
+      if (data.length < 100) hasMore = false;
+      page += 1;
+    }
+    githubRepos.value = allRepos
+      .map(r => ({ value: r.name, label: r.name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    githubReposLoaded.value = true;
+  } catch (err) {
+    githubReposError.value = `Erro ao carregar repositórios: ${err.message}`;
+  } finally {
+    githubReposLoading.value = false;
+  }
+};
+
+watch(
+  () => [localSettings.value.githubOwner, localSettings.value.githubToken],
+  () => {
+    githubReposLoaded.value = false;
+    githubRepos.value = [];
+    githubReposError.value = '';
+  }
+);
+
 const testGitConnection = async () => {
   testGitStatus.value = 'checking';
   testGitMessage.value = 'Testando conexão...';
@@ -560,7 +614,17 @@ const handleResetSystem = async () => {
                   <div v-else-if="localSettings.gitProvider === 'github'" class="grid gap-6 pt-4 border-t border-app-border-light animate-fadeIn">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <AppInput v-model="localSettings.githubOwner" label="Dono do Repositório (Owner)" placeholder="Ex: ssergio100" />
-                      <AppInput v-model="localSettings.githubRepo" label="Nome do Repositório" placeholder="Ex: TASS" />
+                      <AppSelect
+                        v-model="localSettings.githubRepo"
+                        label="Nome do Repositório"
+                        placeholder="Selecione o repositório..."
+                        searchable
+                        search-placeholder="Buscar repositório..."
+                        :options="githubRepos"
+                        :loading="githubReposLoading"
+                        :empty-message="githubReposError || 'Nenhum repositório encontrado para este dono.'"
+                        @open="loadGithubRepos()"
+                      />
                     </div>
                     <AppInput v-model="localSettings.githubToken" type="password" label="Personal Access Token (Classic ou Fine-grained)" placeholder="ghp_..." help-text="Precisa das permissões de leitura/escrita em Pull Requests e Conteúdo (repo)." />
                     
