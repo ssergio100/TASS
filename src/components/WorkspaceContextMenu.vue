@@ -137,37 +137,24 @@ const handleApplyStyleAll = async (styleId, triggerAnimation = false) => {
   await Promise.all(promises);
 };
 
-// --- PREVIEW DE PRESETS AO HOVER ---
-// Guarda o styleId original de cada tarefa antes de iniciar o preview.
-// Assim conseguimos restaurar exatamente o estado anterior caso o usuário não confirme.
-let savedStylesBeforePreview = null;
-
-const handlePreviewStart = async (styleId) => {
-  // Salva o estado atual antes de qualquer alteração de preview
-  if (!savedStylesBeforePreview) {
-    savedStylesBeforePreview = taskStore.tasks.map(t => ({ id: t.id, styleId: t.styleId || null }));
-  }
-  await handleApplyStyleAll(styleId, false);
+// --- PREVIEW DE PRESETS AO HOVER (Visual apenas) ---
+// O hover apenas aplica um preview visual via uiStore.previewGlobalStyleId,
+// sem persistir nada no store/banco. O preset só é aplicado de fato no clique.
+const handlePreviewStart = (styleId) => {
+  uiStore.previewGlobalStyleId = styleId;
 };
 
-const handlePreviewEnd = async () => {
-  // Restaura o estado salvo ao sair do hover sem clicar
-  if (savedStylesBeforePreview) {
-    const promises = savedStylesBeforePreview.map(({ id, styleId }) =>
-      taskStore.updateTask(id, { styleId })
-    );
-    await Promise.all(promises);
-    savedStylesBeforePreview = null;
-  }
+const handlePreviewEnd = () => {
+  uiStore.previewGlobalStyleId = null;
 };
 
 const handleApplyAndConfirm = async (styleId) => {
-  // Ao clicar, descarta o snapshot (o estado atual já é o correto)
-  savedStylesBeforePreview = null;
+  uiStore.previewGlobalStyleId = null;
   await handleApplyStyleAll(styleId, true);
 };
 
 onMounted(() => {
+  uiStore.previewGlobalStyleId = null;
   adjustPosition();
   window.addEventListener('click', (e) => {
     if (menuRef.value && !menuRef.value.contains(e.target)) emit('close');
@@ -175,6 +162,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  uiStore.previewGlobalStyleId = null;
   window.removeEventListener('click', () => {});
 });
 </script>

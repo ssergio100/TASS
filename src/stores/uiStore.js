@@ -20,6 +20,10 @@ export const useUIStore = defineStore('ui', () => {
   const previewTaskId = ref(null);
   const previewStyleId = ref(null);
 
+  // Preview global de presets (menu de contexto do Workspace)
+  // null = sem preview. Qualquer outro valor (incluindo '') força o preview visual.
+  const previewGlobalStyleId = ref(null);
+
   // Payloads / Intermediary states
   const taskToEdit = ref(null);
   const taskForTimeAdjustment = ref(null);
@@ -147,6 +151,7 @@ export const useUIStore = defineStore('ui', () => {
     showRadio, showTimeAdjustment, showGlobalDock,
     showWorkspaceContextMenu, workspaceContextMenuPosition,
     showStylePickerMenu, stylePickerPosition, previewTaskId, previewStyleId,
+    previewGlobalStyleId,
     taskToEdit, taskForTimeAdjustment, settingsInitialTab,
     interfaceInitialTab, sprintInitialShowAddForm, animatingTaskIds,
     openTaskModal, closeTaskModal,
