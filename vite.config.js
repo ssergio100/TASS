@@ -3,14 +3,16 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/tass/' : '/',
+  // base: mode === 'production' ? '/tass/' : '/',
+  base: mode === 'production' ? '/' : '/',
   plugins: [
     vue()
   ],
   server: {
     host: true, // Expõe o servidor na rede local (responde por IP)
-    port: 5175,
-    strictPort: true
+    port: 5173,
+    strictPort: true,
+    allowedHosts: true
   },
   test: {
     environment: 'jsdom',
