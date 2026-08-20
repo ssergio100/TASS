@@ -10,7 +10,8 @@ vi.mock('../../src/stores/uiStore', () => ({
     workspaceContextMenuPosition: { x: 100, y: 100 },
     showWorkspaceContextMenu: true,
     animatingTaskIds: [],
-    triggerPresetAnimation: vi.fn()
+    triggerPresetAnimation: vi.fn(),
+    previewGlobalStyleId: null
   }))
 }));
 

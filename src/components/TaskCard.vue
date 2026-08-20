@@ -54,13 +54,9 @@ const activeStyle = computed(() => {
     if (profile && profile.styles && Object.keys(profile.styles).length > 0) customStyles = profile.styles;
   }
 
-  // Prioridade 1.5: Preview Temporário (Ao pressionar 'p' e flutuar o mouse)
-  const isPreviewing = uiStore.previewTaskId === props.task.id && uiStore.showStylePickerMenu;
-  const effectiveStyleId = isPreviewing ? uiStore.previewStyleId : props.task.styleId;
-
-  // Prioridade 2: Estilo próprio da Tarefa ou Preview
-  if (Object.keys(customStyles).length === 0 && effectiveStyleId) {
-    const profile = taskStyleStore.getStyleById(effectiveStyleId);
+  // Prioridade 2: Estilo próprio da Tarefa, Preview (single) ou Preview Global
+  if (Object.keys(customStyles).length === 0 && effectiveStyleId.value) {
+    const profile = taskStyleStore.getStyleById(effectiveStyleId.value);
     if (profile && profile.styles && Object.keys(profile.styles).length > 0) customStyles = profile.styles;
   }
   
@@ -84,12 +80,9 @@ const taskColors = computed(() => {
     if (profile && profile.colors && profile.colors.color) return profile.colors;
   }
 
-  const isPreviewing = uiStore.previewTaskId === props.task.id && uiStore.showStylePickerMenu;
-  const effectiveStyleId = isPreviewing ? uiStore.previewStyleId : props.task.styleId;
-
-  // Prioridade 2: Estilo próprio da Tarefa ou Preview
-  if (effectiveStyleId) {
-    const profile = taskStyleStore.getStyleById(effectiveStyleId);
+  // Prioridade 2: Estilo próprio da Tarefa, Preview (single) ou Preview Global
+  if (effectiveStyleId.value) {
+    const profile = taskStyleStore.getStyleById(effectiveStyleId.value);
     if (profile && profile.colors && profile.colors.color) return profile.colors;
   }
   
@@ -100,6 +93,20 @@ const taskColors = computed(() => {
     textLightColor: '',
     textDarkColor: ''
   };
+});
+
+const effectiveStyleId = computed(() => {
+  // Preview global do menu de contexto (Presets do Workspace)
+  // Nunca altera o estado real da tarefa, apenas a visualização.
+  if (uiStore.previewGlobalStyleId !== null && !props.task.styleLocked) {
+    return uiStore.previewGlobalStyleId;
+  }
+
+  // Preview single-task (StylePickerMenu)
+  const isPreviewing = uiStore.previewTaskId === props.task.id && uiStore.showStylePickerMenu;
+  if (isPreviewing) return uiStore.previewStyleId;
+
+  return props.task.styleId || '';
 });
 
 const emit = defineEmits([
