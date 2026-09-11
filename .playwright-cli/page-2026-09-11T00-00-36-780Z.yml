@@ -1,0 +1,142 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic:
+        - heading "Tass" [level=1]
+        - generic:
+          - generic: Copyright © 2026
+          - generic: Feito com ❤️
+    - main [ref=e5]:
+      - complementary [ref=e6]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: NOTAS RÁPIDAS
+            - button [ref=e14] [cursor=pointer]
+          - generic [ref=e18]: "1"
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - button [ref=e35] [cursor=pointer]
+      - generic [ref=e37]: "Sprint: 0h 0m • Hoje: 0h 0m"
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - button "Todas" [ref=e44] [cursor=pointer]
+        - button "Ativas" [ref=e45] [cursor=pointer]
+        - button "Feitas" [ref=e46] [cursor=pointer]
+      - generic [ref=e49]:
+        - button [ref=e50] [cursor=pointer]
+        - button [ref=e53] [cursor=pointer]
+        - button [ref=e57] [cursor=pointer]
+        - button [ref=e60] [cursor=pointer]
+        - button [ref=e64] [cursor=pointer]
+        - button [ref=e71] [cursor=pointer]
+  - generic [ref=e218]:
+    - generic [ref=e219]:
+      - generic [ref=e225]:
+        - heading "Integração Remota" [level=2] [ref=e336]
+        - paragraph [ref=e227]: Conecte ao GitHub ou GitLab.
+      - button [ref=e229] [cursor=pointer]
+    - generic [ref=e233]:
+      - complementary [ref=e234]:
+        - navigation [ref=e235]:
+          - button "Integração Remota" [active] [ref=e236] [cursor=pointer]
+          - button "Jornada de Trabalho" [ref=e241] [cursor=pointer]
+          - button "Saúde e Bem-estar" [ref=e246] [cursor=pointer]
+          - button "Sistema e Interface" [ref=e250] [cursor=pointer]
+          - button "Dados e Segurança" [ref=e254] [cursor=pointer]
+          - button "Atalhos" [ref=e259] [cursor=pointer]
+          - button "Sobre o TASS" [ref=e263] [cursor=pointer]
+          - button "Ajustes Visuais" [ref=e268] [cursor=pointer]
+        - paragraph [ref=e277]: Confirme as alterações no botão abaixo para persistir no banco de dados.
+      - main [ref=e278]:
+        - generic [ref=e338]:
+          - generic [ref=e339]:
+            - generic [ref=e345]:
+              - heading "Provedor Git" [level=3] [ref=e346]
+              - paragraph [ref=e347]: Escolha a plataforma
+            - generic [ref=e348]:
+              - button "GitLab" [ref=e349] [cursor=pointer]
+              - button "GitHub" [ref=e353] [cursor=pointer]
+          - generic [ref=e357]:
+            - generic [ref=e359]:
+              - button "Link Mágico" [ref=e360] [cursor=pointer]
+              - button "API Automática" [ref=e361] [cursor=pointer]
+            - generic [ref=e362]:
+              - generic [ref=e363]: URL da Instância GitLab
+              - textbox "https://gitlab.com" [ref=e366]: https://git.lliege.com.br/POCS/ci
+            - paragraph [ref=e368]: No modo Link Mágico, o TASS apenas gerará URLs diretas para criação de branches. Nenhuma credencial de API é necessária.
+            - generic [ref=e369]:
+              - generic [ref=e370]:
+                - generic [ref=e371]:
+                  - heading "Ambientes e aliases" [level=4] [ref=e372]
+                  - paragraph [ref=e377]: Cadastre livremente os ambientes e escolha um deles como branch base.
+                - button "Adicionar ambiente" [ref=e378] [cursor=pointer]
+              - generic [ref=e381]:
+                - generic [ref=e382]:
+                  - button "Reordenar ambiente" [ref=e383]
+                  - generic [ref=e391]:
+                    - generic [ref=e392]:
+                      - generic [ref=e393]: Branch
+                      - 'textbox "Ex: integration/client-a" [ref=e396]'
+                    - generic [ref=e397]:
+                      - generic [ref=e398]: Alias
+                      - 'textbox "Ex: Integração Cliente A" [ref=e401]': Produção
+                  - generic [ref=e402]:
+                    - generic [ref=e403] [cursor=pointer]:
+                      - radio "Branch base" [checked] [ref=e405]
+                      - generic [ref=e408]: Branch base
+                    - img "Ambiente base" [ref=e409]
+                  - button "Escolha outra base antes de remover" [disabled] [ref=e411]
+                - generic [ref=e415]:
+                  - button "Reordenar ambiente" [ref=e416]
+                  - generic [ref=e424]:
+                    - generic [ref=e425]:
+                      - generic [ref=e426]: Branch
+                      - 'textbox "Ex: integration/client-a" [ref=e429]'
+                    - generic [ref=e430]:
+                      - generic [ref=e431]: Alias
+                      - 'textbox "Ex: Integração Cliente A" [ref=e434]': Homologação
+                  - generic [ref=e436] [cursor=pointer]:
+                    - radio "Branch base" [ref=e438]
+                    - generic [ref=e440]: Branch base
+                  - button "Remover cadastro do ambiente" [ref=e441] [cursor=pointer]
+                - generic [ref=e445]:
+                  - button "Reordenar ambiente" [ref=e446]
+                  - generic [ref=e454]:
+                    - generic [ref=e455]:
+                      - generic [ref=e456]: Branch
+                      - 'textbox "Ex: integration/client-a" [ref=e459]'
+                    - generic [ref=e460]:
+                      - generic [ref=e461]: Alias
+                      - 'textbox "Ex: Integração Cliente A" [ref=e464]': Desenvolvimento
+                  - generic [ref=e466] [cursor=pointer]:
+                    - radio "Branch base" [ref=e468]
+                    - generic [ref=e470]: Branch base
+                  - button "Remover cadastro do ambiente" [ref=e471] [cursor=pointer]
+          - button "Testar Conexão Remota" [ref=e476] [cursor=pointer]
+    - generic [ref=e281]:
+      - button "Fechar" [ref=e282] [cursor=pointer]
+      - button "Salvar" [ref=e283] [cursor=pointer]
+  - complementary [ref=e75]:
+    - generic [ref=e76]:
+      - generic [ref=e81]:
+        - heading "Rádio TASS" [level=2] [ref=e82]
+        - paragraph [ref=e83]: Seu player embutido
+      - button [ref=e84] [cursor=pointer]
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - generic [ref=e90]: Pausado
+        - heading "Nenhuma rádio selecionada" [level=3] [ref=e91]
+      - generic [ref=e92]:
+        - button [ref=e93] [cursor=pointer]
+        - button [ref=e96] [cursor=pointer]
+        - button [ref=e99] [cursor=pointer]
+      - generic [ref=e102]:
+        - button [ref=e103] [cursor=pointer]
+        - slider [ref=e108]: "0.5"
+        - generic [ref=e109]: 50%
+    - generic [ref=e111]:
+      - heading "Estações" [level=4] [ref=e112]
+      - generic [ref=e113]: "0"
+    - generic [ref=e114]:
+      - button "Adicionar Rádio" [ref=e115] [cursor=pointer]
+      - generic "Importar Lista JSON" [ref=e117] [cursor=pointer]

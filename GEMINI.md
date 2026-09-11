@@ -90,9 +90,8 @@ Este arquivo define o comportamento esperado da inteligência artificial ao inte
      - Estilo das tarefas (Espessura do padding, tamanho do título/número da tarefa, tamanho da descrição).
      - Tipografia global (Modificação de fontes).
      - Efeitos de transparência e blur aplicados dinamicamente nos alvos configurados.
-  4. **Integração GitLab:** Exibição do menu de contexto, criação de branch com link mágico/API, e merges automáticos com análise de conflitos.
+  4. **Integração Git Remota e Breeze:** Exibição do menu de contexto, criação de branch com link mágico/API e operação equivalente entre GitLab e GitHub. Validar a coleção livre de ambientes e aliases, a seleção explícita da branch base, merges para qualquer ambiente cadastrado, proteção de todos os ambientes contra a limpeza comum e recriação somente de ambientes não-base após backup e confirmação manual.
   5. **Notas Rápidas:** Abertura e fechamento do painel CLI, alteração de cores, e persistência de notas no banco de dados.
-  6. **Dados e Backups:** Importação/Exportação do sistema e de tarefas em JSON, e login/backup automático com o Google Drive.
+  6. **Dados e Backups:** Importação/Exportação do sistema e de tarefas em JSON; login, envio e restauração pelo Google Drive; conexão WebDAV, envio, listagem, restauração e exclusão de backups na Nextcloud.
   7. **Consistência de Modais com `layout="sidebar"`**: Funcionamento, transição de abas e botões de ação final dos modais complexos (`TaskModal.vue`, `SettingsModal.vue` e `InterfaceMenu.vue`).
 - **Expansão da Checklist:** Sempre que um novo elemento, controle ou funcionalidade for adicionado ao sistema, a IA **DEVE** atualizar esta seção no `GEMINI.md`, incluindo o novo item à lista de verificação obrigatória.
-

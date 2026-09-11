@@ -1,0 +1,39 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic:
+        - heading "Tass" [level=1]
+        - generic:
+          - generic: Copyright © 2026
+          - generic: Feito com ❤️
+    - main [ref=e5]:
+      - complementary [ref=e6]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: NOTAS RÁPIDAS
+            - button [ref=e14] [cursor=pointer]
+          - generic [ref=e18]: "1"
+  - complementary [ref=e24]:
+    - generic [ref=e25]:
+      - generic [ref=e30]:
+        - heading "Rádio TASS" [level=2] [ref=e31]
+        - paragraph [ref=e32]: Seu player embutido
+      - button [ref=e33] [cursor=pointer]
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e39]: Pausado
+        - heading "Nenhuma rádio selecionada" [level=3] [ref=e40]
+      - generic [ref=e41]:
+        - button [ref=e42] [cursor=pointer]
+        - button [ref=e45] [cursor=pointer]
+        - button [ref=e48] [cursor=pointer]
+      - generic [ref=e51]:
+        - button [ref=e52] [cursor=pointer]
+        - slider [ref=e57]: "0.5"
+        - generic [ref=e58]: 50%
+    - generic [ref=e60]:
+      - heading "Estações" [level=4] [ref=e61]
+      - generic [ref=e62]: "0"
+    - generic [ref=e63]:
+      - button "Adicionar Rádio" [ref=e64] [cursor=pointer]
+      - generic "Importar Lista JSON" [ref=e66] [cursor=pointer]

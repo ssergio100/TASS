@@ -16,9 +16,17 @@ Gerencia a integração autenticada com o Google Identity Services (GIS) e a API
 - **Escopos Restritos:** Utiliza apenas o escopo `drive.file` (leitura/escrita dos backups gerados pelo app) e `userinfo.profile` (para avatar e saudação).
 - **Fluxos Principais:** Autenticação (Login/Logout), envio silencioso de backups à nuvem e restauração de snapshots (banco de dados inteiro).
 
+### ☁️ `nextcloudService.js`
+Integra o TASS a instâncias Nextcloud por meio do protocolo WebDAV nativo, sem SDK externo ou cadastro de cliente OAuth.
+- **Conexão:** `connect({ serverUrl, username, appPassword })` valida as credenciais com `PROPFIND`, exige HTTPS fora de ambientes locais e cria a pasta `TASS` com `MKCOL` quando necessário.
+- **Sessão:** `getConnection()` e `isAuthenticated()` expõem apenas o estado necessário à interface. A URL, o usuário e a senha de aplicativo ficam em `sessionStorage`, nunca no backup ou no armazenamento persistente; `disconnect()` remove a sessão.
+- **Backups:** `uploadBackup(data)` envia JSON via `PUT`; `listBackups()` consulta a pasta com `PROPFIND` e ordena os arquivos pela última modificação; `downloadBackup(filename)` e `deleteBackup(filename)` usam `GET` e `DELETE`.
+- **Segurança:** Todos os segmentos de caminho são codificados, conexões remotas sem HTTPS são recusadas e a interface orienta o uso de senha de aplicativo exclusiva.
+- **CORS:** Em instalações de outra origem, o servidor ou proxy reverso da Nextcloud deve autorizar a origem do TASS, os cabeçalhos `Authorization`, `Content-Type` e `Depth`, e os métodos `GET`, `PUT`, `DELETE`, `PROPFIND` e `MKCOL`, incluindo a requisição de preflight `OPTIONS`.
+
 ### 💾 `backupService.js`
 Orquestra o ciclo de vida da persistência em formato JSON.
-- Faz a ponte entre o estado local e local storage (`taskStore`, `settingsStore`, IndexedDB) e o cloud runner (`googleDriveService.js`).
+- Faz a ponte entre o estado local e local storage (`taskStore`, `settingsStore`, IndexedDB) e os serviços de nuvem (`googleDriveService.js` e `nextcloudService.js`).
 - Serializa e gera blobs JSON (`tass_export_tarefas.json`, `tass_export_sistema.json`) que podem ser salvos localmente pelo usuário (download) ou enviados para o Drive.
 
 ### 📢 `notificationService.js`
@@ -32,7 +40,8 @@ Sistema unificado de feedback visual da aplicação, integrando-se nativamente c
 ### 🧪 `gitlab.js` e `github.js` (Provider Facade)
 Integração profunda e especializada com as APIs REST do GitLab e GitHub para otimizar a esteira de desenvolvimento. Ambos respondem à interface uniforme do `gitProvider.js`.
 - **Gestão de Branches:** Automação para verificar, criar ou deletar branches (utilizando como origem primária o `activeBaseBranch` selecionado pelo usuário nas configurações do TASS).
-- **Merge Requests/Pull Requests:** O fluxo `analyzeAndMerge` compara a branch de feature e a branch de destino (`dev` ou `hml` dinamicamente selecionadas pela Store via `activeBranchDev`/`activeBranchHml`). Detecta arquivos alterados e analisa conflitos antes de aplicar ou sugerir um Merge direto e conclusivo, resolvido interativamente com o desenvolvedor via interface.
+- **Merge Requests/Pull Requests:** O fluxo `analyzeAndMerge` recebe explicitamente qualquer ambiente cadastrado como destino, compara a branch de trabalho, detecta arquivos alterados e analisa conflitos antes de aplicar ou sugerir um merge conclusivo pela interface.
+- **Proteção e recriação:** Toda branch cadastrada como ambiente é excluída da limpeza de branches de trabalho. A branch base nunca pode ser destruída; um ambiente não-base só é recriado pelo Breeze depois da criação obrigatória de um backup e da confirmação manual da exclusão.
 - **Agnosticismo de UI:** Os componentes visuais (como o `GitRebuilder` ou `ActionPanel`) não se importam com qual serviço está ativo. O roteador (`gitProvider.js`) decide se chama a integração do GitHub ou GitLab mantendo um contrato universal de entrada e saída.
 
 ### 🚀 `taskActionService.js`

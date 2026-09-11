@@ -1,0 +1,103 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic:
+        - heading "Tass" [level=1]
+        - generic:
+          - generic: Copyright © 2026
+          - generic: Feito com ❤️
+    - main [ref=e5]:
+      - complementary [ref=e6]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: NOTAS RÁPIDAS
+            - button [ref=e14] [cursor=pointer]
+          - generic [ref=e18]: "1"
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - button [ref=e35] [cursor=pointer]
+      - generic [ref=e37]: "Sprint: 0h 0m • Hoje: 0h 0m"
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - button "Todas" [ref=e44] [cursor=pointer]
+        - button "Ativas" [ref=e45] [cursor=pointer]
+        - button "Feitas" [ref=e46] [cursor=pointer]
+      - generic [ref=e49]:
+        - button [ref=e50] [cursor=pointer]
+        - button [ref=e53] [cursor=pointer]
+        - button [ref=e57] [cursor=pointer]
+        - button [ref=e60] [cursor=pointer]
+        - button [ref=e64] [cursor=pointer]
+        - button [ref=e71] [cursor=pointer]
+  - complementary [ref=e75]:
+    - generic [ref=e76]:
+      - generic [ref=e81]:
+        - heading "Rádio TASS" [level=2] [ref=e82]
+        - paragraph [ref=e83]: Seu player embutido
+      - button [ref=e84] [cursor=pointer]
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - generic [ref=e90]: Pausado
+        - heading "Nenhuma rádio selecionada" [level=3] [ref=e91]
+      - generic [ref=e92]:
+        - button [ref=e93] [cursor=pointer]
+        - button [ref=e96] [cursor=pointer]
+        - button [ref=e99] [cursor=pointer]
+      - generic [ref=e102]:
+        - button [ref=e103] [cursor=pointer]
+        - slider [ref=e108]: "0.5"
+        - generic [ref=e109]: 50%
+    - generic [ref=e111]:
+      - heading "Estações" [level=4] [ref=e112]
+      - generic [ref=e113]: "0"
+    - generic [ref=e114]:
+      - button "Adicionar Rádio" [ref=e115] [cursor=pointer]
+      - generic "Importar Lista JSON" [ref=e117] [cursor=pointer]
+  - generic [ref=e122]:
+    - generic [ref=e123]:
+      - generic [ref=e129]:
+        - heading "Bem-vindo ao Tass" [level=2] [ref=e130]
+        - text: Selecione um atalho rápido para configurar seu workspace ou iniciar uma ação
+      - button [ref=e132] [cursor=pointer]
+    - main [ref=e136]:
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - button "Cards de Exemplo Criar 2 presets visuais para testar" [ref=e139] [cursor=pointer]:
+            - generic [ref=e144]: Cards de Exemplo
+            - generic [ref=e145]: Criar 2 presets visuais para testar
+          - button "Visual e UI Personalize o visual e efeitos" [ref=e146] [cursor=pointer]:
+            - generic [ref=e154]: Visual e UI
+            - generic [ref=e155]: Personalize o visual e efeitos
+          - button "Nova Tarefa Crie uma atividade no Kanban" [ref=e156] [cursor=pointer]:
+            - generic [ref=e160]: Nova Tarefa
+            - generic [ref=e161]: Crie uma atividade no Kanban
+          - button "Nova Sprint Inicie um ciclo de entregas" [ref=e162] [cursor=pointer]:
+            - generic [ref=e166]: Nova Sprint
+            - generic [ref=e167]: Inicie um ciclo de entregas
+          - button "Ouvir Rádio Músicas de foco e flow state" [ref=e168] [cursor=pointer]:
+            - generic [ref=e176]: Ouvir Rádio
+            - generic [ref=e177]: Músicas de foco e flow state
+          - button "GitLab / GitHub Conecte seus MRs e branches" [ref=e178] [cursor=pointer]:
+            - generic [ref=e183]: GitLab / GitHub
+            - generic [ref=e184]: Conecte seus MRs e branches
+          - button "Breeze Rebuilder Rebuilds e Merges automáticos" [ref=e185] [cursor=pointer]:
+            - generic [ref=e189]: Breeze Rebuilder
+            - generic [ref=e190]: Rebuilds e Merges automáticos
+          - button "Construtor Visual Crie Presets para os cards" [ref=e191] [cursor=pointer]:
+            - generic [ref=e197]: Construtor Visual
+            - generic [ref=e198]: Crie Presets para os cards
+          - button "Sobre o TASS Informações e suporte" [ref=e199] [cursor=pointer]:
+            - generic [ref=e203]: Sobre o TASS
+            - generic [ref=e204]: Informações e suporte
+        - generic [ref=e205]:
+          - generic [ref=e206]:
+            - generic [ref=e207] [cursor=pointer]:
+              - checkbox "Não mostrar este guia ao iniciar" [ref=e209]
+              - generic [ref=e211]: Não mostrar este guia ao iniciar
+            - button "Entendi" [ref=e212] [cursor=pointer]
+          - generic [ref=e213]:
+            - link "Política de Privacidade" [ref=e214] [cursor=pointer]:
+              - /url: /privacy
+            - generic [ref=e215]: •
+            - link "Termos de Uso" [ref=e216] [cursor=pointer]:
+              - /url: /terms

@@ -3,7 +3,8 @@ defineProps({
   modelValue: [String, Number, Boolean],
   value: [String, Number, Boolean],
   label: String,
-  name: String
+  name: String,
+  ariaLabel: String
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -15,6 +16,7 @@ const emit = defineEmits(['update:modelValue']);
       <input 
         type="radio" 
         :name="name"
+        :aria-label="ariaLabel || label"
         :checked="modelValue === value" 
         @change="emit('update:modelValue', value)"
         class="sr-only peer"

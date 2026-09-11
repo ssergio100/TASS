@@ -18,6 +18,7 @@ import AppTextarea from '../components/base/AppTextarea.vue';
 import AppTimePicker from '../components/base/AppTimePicker.vue';
 import AppGlassCard from '../components/base/AppGlassCard.vue';
 import AppColorPalette from '../components/AppColorPalette.vue';
+import GitEnvironmentEditor from '../components/GitEnvironmentEditor.vue';
 // --- ESTADOS DE TESTE PARA A GALERIA DE COMPONENTES BASE ---
 const testSwitchVal = ref(false);
 const testSwitch2Val = ref(true);
@@ -29,6 +30,11 @@ const testProgressVal = ref(45);
 const testTimeVal = ref({ hours: 14, minutes: 30 });
 const testBtnLoading = ref(false);
 const testBtnDisabled = ref(false);
+const demoBaseEnvironmentId = ref('demo-environment-1');
+const demoEnvironments = ref([
+  { id: 'demo-environment-1', branch: 'stable', alias: 'Produção' },
+  { id: 'demo-environment-2', branch: 'integration', alias: 'Integração' }
+]);
 
 const selectOptions = [
   { value: 'op1', label: 'Opção 1 - Breeze' },
@@ -76,6 +82,13 @@ const decrementProgress = () => {
             :icon="Settings" 
             placeholder="Digite alguma coisa..." 
           />
+
+          <AppInput
+            v-model="testInputVal"
+            label="Entrada compacta"
+            size="sm"
+            placeholder="Variante para listas densas"
+          />
           
           <AppTextarea 
             v-model="testTextareaVal" 
@@ -107,6 +120,13 @@ const decrementProgress = () => {
             label="Seletor Dinâmico" 
             :options="selectOptions" 
             placeholder="Selecione uma opção..."
+          />
+
+          <AppSelect
+            v-model="testSelectVal"
+            label="Seletor compacto"
+            size="sm"
+            :options="selectOptions"
           />
           
           <div class="space-y-2">
@@ -434,6 +454,19 @@ const decrementProgress = () => {
         <div class="flex-1 flex items-center justify-center rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 min-h-[250px]">
           <AppColorPalette />
         </div>
+      </div>
+
+      <!-- Card 10: Editor dinâmico de ambientes Git -->
+      <div class="app-card-panel flex flex-col gap-4 text-left shadow-lg lg:col-span-2">
+        <div>
+          <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Editor de Ambientes Git</h3>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Componente de domínio usado na Integração Remota</p>
+        </div>
+        <GitEnvironmentEditor
+          v-model="demoEnvironments"
+          v-model:base-environment-id="demoBaseEnvironmentId"
+          provider="demo"
+        />
       </div>
 
     </div>

@@ -3,18 +3,20 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { 
   RefreshCw, Terminal,
   GitBranch, AlertTriangle, Check,
-  Trash2, Eye, EyeOff, Lock, Settings, Info, CloudLightning
+  Trash2, Lock, Settings, Info, CloudLightning, ArrowRight
 } from 'lucide-vue-next';
 
 import { useSettingsStore } from '../../stores/settingsStore';
 import BaseModal from '../BaseModal.vue';
-import AppInput from '../base/AppInput.vue';
+import AppButton from '../base/AppButton.vue';
+import AppSelect from '../base/AppSelect.vue';
 import TerminalConsole from './TerminalConsole.vue';
 import BranchList from './BranchList.vue';
 import ActionPanel from './ActionPanel.vue';
 import { gitProviderService } from '../../services/gitProvider';
 import { notificationService } from '../../services/notificationService';
 import { useTabSwipe } from '../../composables/useTabSwipe';
+import { filterWorkingBranches } from '../../utils/gitEnvironments.js';
 
 const settingsStore = useSettingsStore();
 const emit = defineEmits(['close']);
@@ -49,7 +51,8 @@ onUnmounted(() => {
 
 // --- ESTADOS DO PIPELINE DE RECONSTRUÇÃO ---
 const pipelineActive = ref(false);
-const pipelineTarget = ref(null); // 'dev' ou 'hml'
+const pipelineTarget = ref(null);
+const selectedRebuildEnvironmentId = ref('');
 const pipelineStep = ref(0);
 const pipelineLogs = ref([]);
 const activeBranches = ref([]);
@@ -81,23 +84,18 @@ const navRef = ref(null);
 const swipeAreaRef = ref(null);
 const { offsetX, isSwiping, jumpMode, disableVueTransition } = useTabSwipe(activeTab, tabs, navRef, swipeAreaRef);
 
-const mergeTarget = ref(null);      // Nome físico da branch selecionada (dev ou hml)
-const mergeTargetType = ref(null);    // 'dev' ou 'hml'
+const mergeTarget = ref(null);
+const mergeTargetEnvironmentId = ref('');
 const mergeLogs = ref([]);          // Logs da aba de mesclagem
 const mergeLoadingMap = ref({});    // Mapeamento de branch -> boolean
 const mergeStatusMap = ref({});     // Mapeamento de branch -> status string
 const branchesFetched = ref(false);
 
 // --- ESTADOS DE CONFIGURAÇÕES E MODAIS ---
-// Modal de deleção
-const showDeleteConfirmModal = ref(false);
-const branchToDelete = ref(null);
-const deleteLoading = ref(false);
-
 // Modal de Confirmação de Mesclagem
 const showMergeConfirmModal = ref(false);
 const mergeConfirmTargetBranch = ref('');
-const mergeConfirmTargetType = ref('');
+const mergeConfirmTargetAlias = ref('');
 const mergeConfirmSourceBranch = ref('');
 
 // Estados de Verificação de Merge (Pre-Check)
@@ -108,6 +106,57 @@ const currentCheckMrIid = ref(null); // Armazena o ID do MR de teste para fecham
 // Exclusão em lote (Bulk Delete)
 const selectedBranches = ref([]);
 const showBulkDeleteModal = ref(false);
+
+const providerName = computed(() => gitProviderService.getProviderName(settingsStore));
+const providerIsReady = computed(() => {
+  if (settingsStore.gitProvider === 'github') {
+    return Boolean(settingsStore.githubOwner && settingsStore.githubRepo && settingsStore.githubToken);
+  }
+  return Boolean(settingsStore.gitlabProjectId && settingsStore.gitlabToken);
+});
+const rebuildTargets = computed(() => settingsStore.activeEnvironments.filter(environment => (
+  environment.id !== settingsStore.activeBaseEnvironmentId
+)));
+const selectedRebuildEnvironment = computed(() => rebuildTargets.value.find(environment => (
+  environment.id === selectedRebuildEnvironmentId.value
+)) || null);
+const rebuildOptions = computed(() => rebuildTargets.value.map(environment => ({
+  value: environment.id,
+  label: `${environment.alias} — ${environment.branch}`
+})));
+const protectedBranchNames = computed(() => new Set(
+  settingsStore.activeEnvironments.map(environment => environment.branch)
+));
+
+const synchronizeEnvironmentSelections = () => {
+  selectedBranches.value = [];
+  activeBranches.value = [];
+  branchesFetched.value = false;
+
+  const mergeTargetExists = settingsStore.activeEnvironments.some(environment => (
+    environment.id === mergeTargetEnvironmentId.value
+  ));
+  if (!mergeTargetExists) {
+    mergeTargetEnvironmentId.value = settingsStore.activeBaseEnvironmentId;
+  }
+
+  const rebuildTargetExists = rebuildTargets.value.some(environment => (
+    environment.id === selectedRebuildEnvironmentId.value
+  ));
+  if (!rebuildTargetExists) {
+    selectedRebuildEnvironmentId.value = rebuildTargets.value[0]?.id || '';
+  }
+};
+
+watch(
+  () => [
+    settingsStore.gitProvider,
+    settingsStore.activeBaseEnvironmentId,
+    settingsStore.activeEnvironments.map(environment => environment.id).join('|')
+  ],
+  synchronizeEnvironmentSelections,
+  { immediate: true }
+);
 
 const decreaseFontSize = () => {
   if (settingsStore.consoleFontSize > 10) {
@@ -188,15 +237,8 @@ const fetchBranches = async (target, isBackgroundSearch = false) => {
       branchesOrder.value
     );
 
-    const baseBranches = [
-      settingsStore.activeBranchMaster,
-      settingsStore.activeBranchHml,
-      settingsStore.activeBranchDev,
-      'master', 'main', 'develop'
-    ];
-    
-    // Filtra para remover ramos base e releases padrão
-    const filtered = data.filter(b => !baseBranches.includes(b.name) && !b.name.startsWith('release/'));
+    // Ambientes nunca entram na área destinada a branches temporárias de trabalho.
+    const filtered = filterWorkingBranches(data, settingsStore.activeEnvironments);
     
     activeBranches.value = filtered.map(b => ({
       name: b.name,
@@ -230,23 +272,12 @@ const handleSearch = () => {
   }, 400);
 };
 
-const selectMergeTarget = (target, type) => {
-  searchQuery.value = '';
-  branchesError.value = '';
-  selectedBranches.value = []; // Reseta a seleção de branches
-  mergeTarget.value = target;
-  mergeTargetType.value = type;
-  fetchBranches(target, false);
-};
-
 const listAllBranches = async () => {
   searchQuery.value = '';
   branchesError.value = '';
   selectedBranches.value = [];
-  // Usamos Desenvolvimento por padrão para a chamada do GitLab
-  mergeTarget.value = settingsStore.activeBranchDev;
-  mergeTargetType.value = 'dev';
-  await fetchBranches(settingsStore.activeBranchDev, false);
+  mergeTarget.value = settingsStore.activeBaseBranch;
+  await fetchBranches(settingsStore.activeBaseBranch, false);
   branchesFetched.value = true;
 };
 
@@ -272,17 +303,22 @@ const performMergeCheck = async (source, target) => {
   }
 };
 
-const runMergeToTarget = (targetBranch, targetType) => {
+const runMergeToTarget = (targetEnvironment) => {
   if (selectedBranches.value.length !== 1) return;
   const branchName = selectedBranches.value[0];
+  if (!targetEnvironment?.branch) return;
+  if (protectedBranchNames.value.has(branchName)) {
+    notificationService.alert('Operação bloqueada', 'Uma branch de ambiente não pode ser usada como branch de trabalho.', 'warning');
+    return;
+  }
   
-  mergeConfirmTargetBranch.value = targetBranch;
-  mergeConfirmTargetType.value = targetType;
+  mergeConfirmTargetBranch.value = targetEnvironment.branch;
+  mergeConfirmTargetAlias.value = targetEnvironment.alias;
   mergeConfirmSourceBranch.value = branchName;
   showMergeConfirmModal.value = true;
   
   // Inicia a verificação assim que o modal abre
-  performMergeCheck(branchName, targetBranch);
+  performMergeCheck(branchName, targetEnvironment.branch);
 };
 
 const cancelMergeCheck = async () => {
@@ -305,12 +341,10 @@ const executeMergeAfterConfirm = async () => {
   
   const branchName = mergeConfirmSourceBranch.value;
   const targetBranch = mergeConfirmTargetBranch.value;
-  const targetType = mergeConfirmTargetType.value;
   
   if (!branchName || !targetBranch || !currentCheckMrIid.value) return;
   
   mergeTarget.value = targetBranch;
-  mergeTargetType.value = targetType;
   
   const iidToMerge = currentCheckMrIid.value;
   currentCheckMrIid.value = null; 
@@ -336,22 +370,31 @@ const executeMergeAfterConfirm = async () => {
 const toggleOrderAndRefetch = async () => {
   branchesOrder.value = branchesOrder.value === 'desc' ? 'asc' : 'desc';
   if (branchesFetched.value) {
-    await fetchBranches(settingsStore.activeBranchDev, false);
+    await fetchBranches(mergeTarget.value || settingsStore.activeBaseBranch, false);
   }
 };
 
-const runRebuildPipeline = async (type) => {
+const runRebuildPipeline = async () => {
   if (pipelineActive.value) return;
+  if (!providerIsReady.value) {
+    notificationService.alert('Configuração incompleta', `Conclua a integração com o ${providerName.value} antes de reconstruir um ambiente.`, 'warning');
+    return;
+  }
 
-  const target = type === 'dev' ? settingsStore.activeBranchDev : settingsStore.activeBranchHml;
+  const targetEnvironment = selectedRebuildEnvironment.value;
+  const baseEnvironment = settingsStore.activeBaseEnvironment;
+  if (!targetEnvironment || !baseEnvironment) return;
+
+  const target = targetEnvironment.branch;
+  const baseRef = baseEnvironment.branch;
   
-  if (target === settingsStore.activeBranchMaster) {
-    notificationService.alert("Operação Bloqueada", "A branch Master é totalmente protegida.", "warning");
+  if (targetEnvironment.id === baseEnvironment.id || target === baseRef) {
+    notificationService.alert('Operação bloqueada', 'A branch base é totalmente protegida.', 'warning');
     return;
   }
 
   pipelineActive.value = true;
-  pipelineTarget.value = type;
+  pipelineTarget.value = targetEnvironment.id;
   pipelineStep.value = 1;
   pipelineLogs.value = [];
   activeBranches.value = [];
@@ -384,7 +427,10 @@ const runRebuildPipeline = async (type) => {
     await gitProviderService.breezeCreateBranch(settingsStore, backupBranchName, target);
     addPipelineLog(`[Fase 1: Backup] Backup criado com sucesso como '${backupBranchName}'`, 'success');
   } catch (e) {
-    addPipelineLog(`[Fase 1: Backup] Erro: ${e.message}. Prosseguindo.`, 'warning');
+    addPipelineLog(`[Fase 1: Backup] Falha ao criar o backup: ${e.message}. Pipeline interrompido.`, 'error');
+    pipelineActive.value = false;
+    pipelineTarget.value = null;
+    return;
   }
 
   // Passo 2: Destruição
@@ -406,9 +452,7 @@ const runRebuildPipeline = async (type) => {
   // Passo 3: Recriação
   await new Promise(resolve => setTimeout(resolve, 1200));
   pipelineStep.value = 3;
-  const baseRef = settingsStore.activeBranchMaster;
-
-  addPipelineLog(`[Fase 3: Recriação] Criando nova branch '${target}' a partir da master '${baseRef}'...`, 'info');
+  addPipelineLog(`[Fase 3: Recriação] Criando nova branch '${target}' a partir da base '${baseRef}'...`, 'info');
   try {
     await gitProviderService.breezeCreateBranch(settingsStore, target, baseRef);
     addPipelineLog(`[Fase 3: Recriação] Nova branch '${target}' recriada de forma limpa a partir da '${baseRef}'!`, 'success');
@@ -424,38 +468,7 @@ const runRebuildPipeline = async (type) => {
   addPipelineLog(`=== PIPELINE DE RECONSTRUÇÃO CONCLUÍDO ===`, 'success');
   addPipelineLog(`Ambiente '${target}' reconstruído e limpo a partir de '${baseRef}'!`, 'success');
   pipelineActive.value = false;
-};
-
-const requestDeleteBranch = (branchName) => {
-  branchToDelete.value = branchName;
-  showDeleteConfirmModal.value = true;
-};
-
-const executeDeleteBranch = async () => {
-  const branchName = branchToDelete.value;
-  if (!branchName) return;
-
-  const protectedBranches = [settingsStore.activeBranchMaster, settingsStore.activeBranchHml, settingsStore.activeBranchDev];
-  if (protectedBranches.includes(branchName)) {
-    notificationService.alert("Acesso Negado", "Não é possível deletar uma branch de ambiente principal!", "warning");
-    showDeleteConfirmModal.value = false;
-    return;
-  }
-
-  deleteLoading.value = true;
-  addMergeLog(`Iniciando deleção da branch de feature '${branchName}'...`, 'info');
-
-  try {
-    await gitProviderService.breezeDeleteBranch(settingsStore, branchName);
-    addMergeLog(`[Deleção] Branch '${branchName}' DELETADA do ${gitProviderService.getProviderName(settingsStore)} com sucesso!`, 'success');
-    activeBranches.value = activeBranches.value.filter(b => b.name !== branchName);
-  } catch (err) {
-    addMergeLog(`[Deleção] ERRO ao deletar branch no ${gitProviderService.getProviderName(settingsStore)}: ${err.message}`, 'error');
-  }
-
-  deleteLoading.value = false;
-  showDeleteConfirmModal.value = false;
-  branchToDelete.value = null;
+  pipelineTarget.value = null;
 };
 
 // --- LÓGICA DE EXCLUSÃO EM LOTE (BULK DELETE) ---
@@ -472,8 +485,7 @@ const executeBulkDelete = async () => {
   addMergeLog(`Iniciando exclusão em lote de ${branchesToExclude.length} branches...`, 'warning');
   
   for (const branchName of branchesToExclude) {
-    const protectedBranches = [settingsStore.activeBranchMaster, settingsStore.activeBranchHml, settingsStore.activeBranchDev];
-    if (protectedBranches.includes(branchName)) {
+    if (protectedBranchNames.value.has(branchName)) {
       addMergeLog(`[Lote] Ação abortada para '${branchName}' (branch protegida).`, 'error');
       continue;
     }
@@ -502,9 +514,6 @@ const toggleBranchSelection = (branchName) => {
 
 // --- ROLAGEM AUTOMÁTICA DOS CONSOLES TRATADA INTERNAMENTE NOS SUBCOMPONENTES ---
 
-const toggleTheme = () => {
-  settingsStore.theme = settingsStore.theme === 'dark' ? 'light' : 'dark';
-};
 </script>
 
 <template>
@@ -523,12 +532,12 @@ const toggleTheme = () => {
     <template #header-actions>
       <div 
         class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-[var(--app-input-radius)] border text-[10px] font-black uppercase tracking-wider transition-colors"
-        :class="settingsStore.gitlabToken && settingsStore.gitlabProjectId 
+        :class="providerIsReady
           ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
           : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'"
       >
         <CloudLightning class="w-3.5 h-3.5" />
-        {{ settingsStore.gitlabToken && settingsStore.gitlabProjectId ? 'GitLab Ativo' : 'Offline' }}
+        {{ providerIsReady ? `${providerName} ativo` : `${providerName} incompleto` }}
       </div>
     </template>
 
@@ -559,7 +568,7 @@ const toggleTheme = () => {
           <AlertTriangle class="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
           <div class="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400 font-medium">
             <strong class="font-black block uppercase tracking-widest mb-1">Atenção Crítica:</strong>
-            As ações deste módulo interagem diretamente com o repositório remoto GitLab. Operações de exclusão e mesclagem são irreversíveis.
+            As ações deste módulo interagem diretamente com o {{ providerName }}. Operações de exclusão e mesclagem são irreversíveis.
           </div>
         </div>
       </div>
@@ -589,82 +598,68 @@ const toggleTheme = () => {
               </h4>
             </div>
 
-            <div class="glass-section flex flex-col gap-4 max-h-[calc(100vh-280px)] flex-1 min-h-0 !p-4">
-              <div class="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
-                <!-- MASTER (PROTEGIDA) -->
-                <div data-test="master-card" class="glass-section flex flex-col justify-between shadow-md relative overflow-hidden shrink-0 border-indigo-500/10 !p-4">
-                  <div class="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider rounded-[var(--app-input-radius)] border border-emerald-500/20">
-                    <Lock class="w-3 h-3" />
-                    Protegida
+            <div class="glass-section flex flex-col gap-4 max-h-[calc(100vh-280px)] flex-1 min-h-0 !p-4 overflow-y-auto custom-scrollbar">
+              <div class="glass-section !p-4 border-emerald-500/20 relative overflow-hidden">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                  <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider rounded-[var(--app-input-radius)]">
+                    {{ settingsStore.activeBaseEnvironment?.alias }}
+                  </span>
+                  <span class="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <Lock class="w-3 h-3" /> Branch base
+                  </span>
+                </div>
+                <p class="text-[9px] text-app-muted font-black uppercase tracking-widest mb-1">Origem da recriação</p>
+                <h3 class="text-lg font-black text-app-main font-mono truncate" :title="settingsStore.activeBaseBranch">
+                  {{ settingsStore.activeBaseBranch }}
+                </h3>
+              </div>
+
+              <div class="flex justify-center text-indigo-500">
+                <ArrowRight class="w-5 h-5 rotate-90" />
+              </div>
+
+              <div v-if="rebuildTargets.length" class="space-y-4">
+                <AppSelect
+                  v-model="selectedRebuildEnvironmentId"
+                  label="Destino da recriação"
+                  :options="rebuildOptions"
+                  size="sm"
+                  searchable
+                  search-placeholder="Buscar ambiente..."
+                />
+
+                <div v-if="selectedRebuildEnvironment" class="glass-section !p-4 border-indigo-500/20">
+                  <div class="flex items-center justify-between gap-3 mb-3">
+                    <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-wider rounded-[var(--app-input-radius)]">
+                      {{ selectedRebuildEnvironment.alias }}
+                    </span>
+                    <span class="text-[8px] font-black uppercase tracking-wider text-app-muted">Destino</span>
                   </div>
-                  <div>
-                    <div class="flex items-center justify-between mb-4">
-                      <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[8px] font-black uppercase tracking-wider rounded-[var(--app-input-radius)]">{{ settingsStore.activeAliasMaster }}</span>
-                      <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                    </div>
-                    <h3 class="text-xl font-black text-app-main font-mono text-emerald-500 dark:text-emerald-400 truncate pr-16" :title="settingsStore.activeBranchMaster">
-                      {{ settingsStore.activeBranchMaster }}
-                    </h3>
-                  </div>
-                  <div class="mt-6 pt-4 border-t border-app-border-light">
-                    <p class="text-[10px] text-app-muted font-bold uppercase">Origem Estável</p>
-                    <p class="text-[9px] text-app-sub mt-0.5 font-medium">Nenhuma ação permitida. Serve como base de segurança e integridade.</p>
-                  </div>
+                  <h3 class="text-lg font-black text-app-main font-mono truncate" :title="selectedRebuildEnvironment.branch">
+                    {{ selectedRebuildEnvironment.branch }}
+                  </h3>
+                  <p class="text-[9px] text-app-sub mt-3 pt-3 border-t border-app-border-light">
+                    Um backup será criado antes da exclusão e da recriação desta branch.
+                  </p>
                 </div>
 
-                <!-- HOMOLOGAÇÃO -->
-                <div class="glass-section flex flex-col justify-between shadow-md group shrink-0 border-indigo-500/10 hover:border-indigo-500/30 transition-all !p-4">
-                  <div>
-                    <div class="flex items-center justify-between mb-4">
-                      <span class="px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-500 text-[8px] font-black uppercase tracking-wider rounded-[var(--app-input-radius)]">{{ settingsStore.activeAliasHml }}</span>
-                      <div class="w-3 h-3 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.3)]"></div>
-                    </div>
-                    <h3 class="text-xl font-black text-app-main font-mono truncate" :title="settingsStore.activeBranchHml">
-                      {{ settingsStore.activeBranchHml }}
-                    </h3>
-                    <div class="mt-4 pt-4 border-t border-app-border-light">
-                      <p class="text-[10px] text-app-muted font-bold uppercase">Ambiente de Testes Finais</p>
-                      <p class="text-[9px] text-app-sub mt-0.5">Código validado pronto para homologação.</p>
-                    </div>
-                  </div>
-                  <div class="mt-5 pt-2">
-                    <button 
-                      @click="runRebuildPipeline('hml')"
-                      :disabled="pipelineActive"
-                      class="btn btn-primary w-full flex items-center justify-center gap-2 py-3 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-sm group-hover:shadow-md transition-all"
-                    >
-                      <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': pipelineActive && pipelineTarget === 'hml' }" />
-                      Limpar e Recriar HML
-                    </button>
-                  </div>
-                </div>
+                <AppButton
+                  variant="warning"
+                  size="md"
+                  :icon="RefreshCw"
+                  :loading="pipelineActive && pipelineTarget === selectedRebuildEnvironmentId"
+                  :disabled="pipelineActive || !selectedRebuildEnvironment || !providerIsReady"
+                  class="w-full"
+                  @click="runRebuildPipeline"
+                >
+                  Limpar e recriar
+                </AppButton>
+              </div>
 
-                <!-- DESENVOLVIMENTO -->
-                <div class="glass-section flex flex-col justify-between shadow-md group shrink-0 border-indigo-500/10 hover:border-indigo-500/30 transition-all !p-4">
-                  <div>
-                    <div class="flex items-center justify-between mb-4">
-                      <span class="px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[8px] font-black uppercase tracking-wider rounded-[var(--app-input-radius)]">{{ settingsStore.activeAliasDev }}</span>
-                      <div class="w-3 h-3 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.3)]"></div>
-                    </div>
-                    <h3 class="text-xl font-black text-app-main font-mono text-amber-500 dark:text-amber-400 truncate" :title="settingsStore.activeBranchDev">
-                      {{ settingsStore.activeBranchDev }}
-                    </h3>
-                    <div class="mt-4 pt-4 border-t border-app-border-light">
-                      <p class="text-[10px] text-app-muted font-bold uppercase">Ambiente de Integração Diária</p>
-                      <p class="text-[9px] text-app-sub mt-0.5 font-medium">Reunião contínua de funcionalidades em desenvolvimento.</p>
-                    </div>
-                  </div>
-                  <div class="mt-5 pt-2">
-                    <button 
-                      @click="runRebuildPipeline('dev')"
-                      :disabled="pipelineActive"
-                      class="btn btn-warning w-full flex items-center justify-center gap-2 py-3 text-[10px] font-black uppercase tracking-wider cursor-pointer shadow-sm group-hover:shadow-md transition-all"
-                    >
-                      <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': pipelineActive && pipelineTarget === 'dev' }" />
-                      Limpar e Recriar DEV
-                    </button>
-                  </div>
-                </div>
+              <div v-else class="p-5 border border-dashed border-app-border rounded-[var(--app-card-radius)] text-center">
+                <Lock class="w-5 h-5 text-app-muted mx-auto mb-2" />
+                <p class="text-[10px] font-black uppercase tracking-widest text-app-muted">Nenhum destino disponível</p>
+                <p class="text-[9px] text-app-sub mt-1">Cadastre outro ambiente além da branch base.</p>
               </div>
             </div>
           </div>
@@ -723,7 +718,7 @@ const toggleTheme = () => {
               <TerminalConsole
                 :logs="pipelineLogs"
                 :consoleFontSize="settingsStore.consoleFontSize"
-                placeholder="Aguardando comando... Clique em Recriar HML ou DEV para iniciar a esteira."
+                placeholder="Escolha um ambiente para iniciar a esteira de recriação."
                 @increase-font-size="increaseFontSize"
                 @decrease-font-size="decreaseFontSize"
                 class="flex-1 min-h-0"
@@ -744,7 +739,7 @@ const toggleTheme = () => {
                   @click="confirmDestruction"
                   class="w-full py-2.5 bg-[#EF5350] hover:bg-[#E53935] text-white rounded-[var(--app-input-radius)] text-[10px] font-black uppercase tracking-wider transition-all shadow-lg shadow-[#EF5350]/20 active:scale-[0.98]"
                 >
-                  Autorizar Exclusão no GitLab
+                  Autorizar exclusão no {{ providerName }}
                 </button>
               </div>
             </div>
@@ -760,9 +755,8 @@ const toggleTheme = () => {
         <ActionPanel
           :selectedBranches="selectedBranches"
           :branchesLoading="branchesLoading"
-          :branchDesenvolvimento="settingsStore.activeBranchDev"
-          :branchHomologacao="settingsStore.activeBranchHml"
-          :branchMaster="settingsStore.activeBranchMaster"
+          :environments="settingsStore.activeEnvironments"
+          v-model:target-environment-id="mergeTargetEnvironmentId"
           @list-all-branches="listAllBranches"
           @merge-to-target="runMergeToTarget"
           @bulk-delete="requestBulkDelete"
@@ -794,7 +788,7 @@ const toggleTheme = () => {
             <TerminalConsole
               :logs="mergeLogs"
               :consoleFontSize="settingsStore.consoleFontSize"
-              placeholder="Selecione DEV ou HML acima para carregar as branches..."
+              placeholder="Liste as branches, selecione uma origem e escolha o ambiente de destino."
               @increase-font-size="increaseFontSize"
               @decrease-font-size="decreaseFontSize"
               class="max-h-[calc(100vh-250px)]"
@@ -832,7 +826,7 @@ const toggleTheme = () => {
             <p class="font-bold text-indigo-700 dark:text-indigo-400 mb-1">Ação de Integração:</p>
             Você está prestes a mesclar a branch de feature 
             <span class="font-mono text-indigo-650 dark:text-indigo-300 font-bold bg-indigo-50 dark:bg-black/35 px-1.5 py-0.5 rounded-[var(--app-input-radius)]">{{ mergeConfirmSourceBranch }}</span> 
-            no ambiente de destino 
+            no ambiente <strong>{{ mergeConfirmTargetAlias }}</strong>, branch de destino
             <span class="font-mono text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-black/35 px-1.5 py-0.5 rounded-[var(--app-input-radius)]">{{ mergeConfirmTargetBranch }}</span>.
           </div>
         </div>
@@ -861,35 +855,6 @@ const toggleTheme = () => {
     </BaseModal>
 
     <!-- ========================================== -->
-    <!-- MODAL: CONFIRMAÇÃO DE DELEÇÃO DOUBLE-CHECK -->
-    <!-- ========================================== -->
-    <BaseModal 
-      v-if="showDeleteConfirmModal"
-      title="Confirmar Exclusão de Branch"
-      subtitle="ESTA AÇÃO É DESTRUTIVA E PERMANENTE"
-      :icon="Trash2"
-      iconBgColor="#ef4444"
-      okText="Confirmar Deleção"
-      cancelText="Cancelar"
-      :okLoading="deleteLoading"
-      @close="showDeleteConfirmModal = false"
-      @cancel="showDeleteConfirmModal = false"
-      @ok="executeDeleteBranch"
-    >
-      <div class="space-y-4 text-left">
-        <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-[var(--app-card-radius)] flex items-start gap-3">
-          <AlertTriangle class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-          <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            <p class="font-bold text-red-700 dark:text-white mb-1">Atenção Especial:</p>
-            Você está prestes a excluir permanentemente a branch <span class="font-mono text-red-650 dark:text-red-400 font-bold bg-red-100 dark:bg-black/35 px-1.5 py-0.5 rounded-[var(--app-input-radius)]">{{ branchToDelete }}</span> do repositório remoto GitLab. Esta ação não poderá ser desfeita.
-          </div>
-        </div>
-
-
-      </div>
-    </BaseModal>
-
-    <!-- ========================================== -->
     <!-- MODAL: CONFIRMAÇÃO DE DELEÇÃO EM LOTE -->
     <!-- ========================================== -->
     <BaseModal 
@@ -909,7 +874,7 @@ const toggleTheme = () => {
           <AlertTriangle class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
           <div class="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
             <p class="font-bold text-red-700 dark:text-white mb-1">Confirmação de Ação Destrutiva:</p>
-            Você está prestes a excluir permanentemente as <span class="text-red-605 dark:text-red-400 font-bold font-mono">{{ selectedBranches.length }}</span> branches selecionadas abaixo do repositório remoto GitLab.
+            Você está prestes a excluir permanentemente as <span class="text-red-605 dark:text-red-400 font-bold font-mono">{{ selectedBranches.length }}</span> branches selecionadas abaixo do repositório remoto {{ providerName }}.
           </div>
         </div>
 

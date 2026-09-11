@@ -43,6 +43,31 @@ describe('SettingsStore', () => {
     expect(store.isInitialized).toBe(true);
   });
 
+  it('expõe a coleção e a branch base do provedor ativo sem depender de nomes fixos', async () => {
+    const store = useSettingsStore();
+    db.settings.toArray.mockResolvedValue([
+      { key: 'app-git-provider', value: 'github' },
+      {
+        key: 'app-github-environments',
+        value: [
+          { id: 'stable', branch: 'release/customer-a', alias: 'Cliente A' },
+          { id: 'integration', branch: 'integration/next', alias: 'Integração' }
+        ]
+      },
+      { key: 'app-github-base-environment-id', value: 'integration' }
+    ]);
+
+    await store.loadSettings();
+
+    expect(store.activeEnvironments).toHaveLength(2);
+    expect(store.activeBaseEnvironment).toEqual({
+      id: 'integration',
+      branch: 'integration/next',
+      alias: 'Integração'
+    });
+    expect(store.activeBaseBranch).toBe('integration/next');
+  });
+
   it('deve ter darkenWallpaper como true por padrão', () => {
     const store = useSettingsStore();
     expect(store.darkenWallpaper).toBe(true);

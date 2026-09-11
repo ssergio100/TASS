@@ -23,7 +23,7 @@ A arquitetura do TASS é "Store-Driven", o que significa que a maior parte da l�
 
 ### 5. `settingsStore.js`
 - **Papel:** Configurações, Temas e Preferências Globais.
-- **Como funciona:** Armazena e persiste preferências da aplicação como: tema visual (Dark/Light), ajustes finos de Glassmorphism (opacidade, raio de bordas, alvos de blur), integração com GitLab e GitHub (incluindo roteamento e configuração dinâmica de 3 ambientes/branches físicos com seus respectivos "aliases" e chaves de `Branch Base`), quantidade de colunas e horários da jornada de trabalho. Sincroniza essas preferências quase instantaneamente com o banco local e abstrai o acesso via "Getters Globais" (`activeBranchDev`, `activeBaseBranch`, etc.) que se adaptam automaticamente ao provedor Git em uso (GitLab ou GitHub).
+- **Como funciona:** Armazena e persiste preferências da aplicação como: tema visual (Dark/Light), ajustes finos de Glassmorphism (opacidade, raio de bordas, alvos de blur), integração com GitLab e GitHub, quantidade de colunas e horários da jornada de trabalho. Cada provedor possui uma coleção livre e ordenável de ambientes, formada por `id`, branch física e alias, além de uma referência explícita ao ambiente base. Os getters `activeEnvironments`, `activeBaseEnvironment` e `activeBaseBranch` expõem a configuração do provedor ativo sem deduzir papéis a partir do nome das branches. Configurações antigas com três slots são migradas automaticamente para esse formato.
 
 ### 6. `modalStore.js`
 - **Papel:** Gerenciamento de diálogos sistêmicos assíncronos (Confirm/Prompt).

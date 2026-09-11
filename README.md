@@ -66,16 +66,22 @@ O TASS redefine a agilidade com um sistema que se molda ao seu ritmo, e não o c
 | **Foco no Agora** | Elimine o ruído visual com precisão cirúrgica. Escolha focar em uma Sprint específica para máxima concentração ou visualize o panorama completo com a visão global. |
 | **Nomenclatura Livre** | Liberdade total para definir seu método. Personalize o nome das colunas (**Backlog, Fazendo, Revisando**, etc.) para refletir exatamente sua metodologia ou preferência pessoal. |
 
-### ☁️ Sincronização Google Drive Cloud
-Seus dados estão sempre seguros e acessíveis através da integração nativa com o ecossistema Google.
-- **Sync Automático:** Backup transparente em segundo plano, garantindo que você nunca perca seu progresso.
-- **Restauração de Versões:** Sistema de snapshots que permite recuperar estados anteriores das suas tarefas em formato JSON.
-- **Perfil Integrado:** Visualização direta da sua conta Google (nome e foto) na interface, proporcionando um toque pessoal e profissional.
+### ☁️ Backups no Google Drive e Nextcloud
+Seus dados podem ser protegidos tanto no ecossistema Google quanto em uma nuvem Nextcloud de sua escolha.
+- **Google Drive:** Autenticação Google, backups completos e restauração de versões na pasta privada do TASS.
+- **Nextcloud Livre:** Integração WebDAV com qualquer instância compatível, sem cadastro centralizado de aplicativo.
+- **Credencial Protegida:** A senha de aplicativo da Nextcloud permanece apenas na sessão da aba e é removida ao desconectar ou fechar o navegador.
+- **Restauração de Versões:** Lista, restaura e exclui snapshots completos diretamente pela área de Dados e Segurança.
 
-### 🦊 Workflow GitLab de Alta Performance
-Integração profunda projetada para quem vive no ciclo de desenvolvimento moderno.
-- **Merge Rápido:** Gestão inteligente de Merge Requests com análise prévia de conflitos.
-- **Automação de Branches:** Criação e navegação de branches via API oficial do GitLab, automatizando padrões de nomenclatura e fluxos de trabalho.
+Para a Nextcloud, use HTTPS e gere uma senha exclusiva em **Configurações pessoais → Segurança → Dispositivos e sessões**. Quando TASS e Nextcloud estiverem em origens diferentes, o servidor ou proxy da Nextcloud deverá permitir CORS para a origem do TASS e para os métodos WebDAV utilizados pela aplicação.
+
+Para instalações atrás de Cloudflare Tunnel e Nextcloud Apache, consulte o tutorial [Integração TASS + Nextcloud atrás do Cloudflare Tunnel](docs/NEXTCLOUD_CORS_CLOUDFLARE.md).
+
+### 🌿 Workflow Git Remoto de Alta Performance
+Integração com GitLab e GitHub projetada para quem vive no ciclo de desenvolvimento moderno.
+- **Ambientes Livres:** Cadastre quantas branches e aliases forem necessários e escolha explicitamente qual ambiente será a base global, sem convenções obrigatórias de nome.
+- **Merge Rápido:** Selecione qualquer ambiente cadastrado como destino, com análise prévia de conflitos em Merge Requests ou Pull Requests.
+- **Breeze Seguro:** Branches de ambiente ficam fora da limpeza comum. Um ambiente não-base pode ser recriado a partir da base somente depois de um backup obrigatório e de confirmação manual.
 
 ### 📻 Sistema de Rádio Evoluído
 Mantenha o estado de *flow* com a trilha sonora ideal sem sair do ambiente de trabalho.
@@ -153,6 +159,16 @@ npm run lint
 # Gerar build final de produção (SPA)
 npm run build
 ```
+
+### Publicação em servidor estático
+
+O script `scripts/publish-tass.sh` gera o build de produção, valida o acesso SSH e envia o conteúdo de `dist/` para `/srv/sites/tass` no host informado:
+
+```bash
+./scripts/publish-tass.sh --target USUARIO@HOST
+```
+
+O destino pode ser alterado com `--directory`. Também é possível definir `TASS_DEPLOY_TARGET` e `TASS_DEPLOY_DIRECTORY` em `scripts/.env`; esse arquivo privado não deve ser versionado.
 
 ---
 

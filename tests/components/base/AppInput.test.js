@@ -33,4 +33,12 @@ describe('AppInput.vue', () => {
     expect(input.attributes('placeholder')).toBe('Digite aqui');
     expect(input.attributes('maxlength')).toBe('50');
   });
+
+  it('oferece uma variante compacta para editores densos', () => {
+    const wrapper = mount(AppInput, {
+      props: { size: 'sm' }
+    });
+
+    expect(wrapper.get('input').classes()).toEqual(expect.arrayContaining(['px-3', 'py-2', 'text-xs']));
+  });
 });
