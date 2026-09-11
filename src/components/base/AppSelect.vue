@@ -54,6 +54,11 @@ const props = defineProps({
   emptyMessage: {
     type: String,
     default: 'Nenhuma opção disponível'
+  },
+  size: {
+    type: String,
+    default: 'md',
+    validator: value => ['sm', 'md'].includes(value)
   }
 });
 
@@ -157,16 +162,20 @@ const filteredOptions = computed(() => {
     <div 
       @click="toggle"
       v-bind="attrs"
-      class="app-select-trigger app-input px-4 py-3 shadow-sm transition-all cursor-pointer flex items-center justify-between group"
+      class="app-select-trigger app-input shadow-sm transition-all cursor-pointer flex items-center justify-between group"
       :class="[
+        size === 'sm' ? 'px-3 py-2 min-h-9' : 'px-4 py-3',
         error ? 'border-red-500/50 ring-1 ring-red-500/20' : '',
         isOpen ? 'ring-2 ring-indigo-500/40 border-indigo-500/50' : '',
         attrs.class
       ]"
     >
       <span 
-        class="text-sm transition-colors"
-        :class="selectedLabel ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-400 dark:text-slate-500'"
+        class="transition-colors"
+        :class="[
+          size === 'sm' ? 'text-xs' : 'text-sm',
+          selectedLabel ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-400 dark:text-slate-500'
+        ]"
       >
         {{ selectedLabel || placeholder }}
       </span>

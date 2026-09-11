@@ -1,7 +1,10 @@
 <script setup>
-import { Settings, RefreshCw } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { GitMerge, RefreshCw } from 'lucide-vue-next';
+import AppButton from '../base/AppButton.vue';
+import AppSelect from '../base/AppSelect.vue';
 
-defineProps({
+const props = defineProps({
   selectedBranches: {
     type: Array,
     required: true
@@ -10,81 +13,82 @@ defineProps({
     type: Boolean,
     required: true
   },
-  branchDesenvolvimento: {
-    type: String,
+  environments: {
+    type: Array,
     required: true
   },
-  branchHomologacao: {
+  targetEnvironmentId: {
     type: String,
-    required: true
-  },
-  branchMaster: {
-    type: String,
-    required: true
+    default: ''
   }
 });
 
-defineEmits([
+const emit = defineEmits([
+  'update:targetEnvironmentId',
   'list-all-branches',
   'merge-to-target',
   'bulk-delete'
 ]);
+
+const environmentOptions = computed(() => props.environments.map(environment => ({
+  value: environment.id,
+  label: `${environment.alias} — ${environment.branch}`
+})));
+
+const selectedEnvironment = computed(() => (
+  props.environments.find(environment => environment.id === props.targetEnvironmentId) || null
+));
+
+const requestMerge = () => {
+  if (!selectedEnvironment.value || props.selectedBranches.length !== 1) return;
+  emit('merge-to-target', selectedEnvironment.value);
+};
 </script>
 
 <template>
-  <div class="w-full flex flex-row items-center justify-between gap-4">
-    <!-- Esquerda: Ações Gerais -->
-    <button
+  <div class="glass-section !p-3 w-full flex flex-col lg:flex-row lg:items-end justify-between gap-3">
+    <AppButton
+      variant="secondary"
+      size="md"
+      :icon="RefreshCw"
+      :loading="branchesLoading"
       @click="$emit('list-all-branches')"
-      :disabled="branchesLoading"
-      class="px-5 py-2.5 rounded-[var(--app-input-radius)] border bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-950/20 dark:border-white/[0.06] dark:text-slate-400 dark:hover:bg-white/5 transition-all cursor-pointer flex flex-row items-center justify-center gap-2.5 shrink-0 disabled:opacity-50 shadow-sm"
     >
-      <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': branchesLoading }" />
-      <span class="text-[11px] font-black uppercase tracking-wider">Listar Branches</span>
-    </button>
+      Listar branches
+    </AppButton>
 
-    <!-- Direita: Ações Contextuais -->
-    <div class="flex items-center gap-3">
-      <template v-if="selectedBranches.length === 1">
-        <!-- Botão MASTER -->
-        <button
-          @click="$emit('merge-to-target', branchMaster || 'master', 'master')"
-          class="px-5 py-2.5 rounded-[var(--app-input-radius)] border transition-all cursor-pointer flex flex-row items-center justify-center gap-2 shrink-0 bg-emerald-500/10 border-emerald-500/50 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 shadow-sm"
-        >
-          <span class="text-[11px] font-black uppercase tracking-wider">Merge para MASTER</span>
-          <span class="text-[9px] opacity-80 font-mono font-bold">({{ branchMaster || 'master' }})</span>
-        </button>
+    <div class="flex flex-col sm:flex-row sm:items-end gap-2 lg:justify-end flex-1">
+      <div v-if="selectedBranches.length === 1" class="w-full sm:w-72">
+        <AppSelect
+          :model-value="targetEnvironmentId"
+          label="Ambiente de destino"
+          :options="environmentOptions"
+          size="sm"
+          searchable
+          search-placeholder="Buscar ambiente..."
+          @update:model-value="$emit('update:targetEnvironmentId', $event)"
+        />
+      </div>
 
-        <!-- Botão DEV -->
-        <button
-          @click="$emit('merge-to-target', branchDesenvolvimento || 'dev-06', 'dev')"
-          class="px-5 py-2.5 rounded-[var(--app-input-radius)] border transition-all cursor-pointer flex flex-row items-center justify-center gap-2 shrink-0 bg-amber-500/10 border-amber-500/50 hover:border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 shadow-sm"
-        >
-          <span class="text-[11px] font-black uppercase tracking-wider">Merge para DEV</span>
-          <span class="text-[9px] opacity-80 font-mono font-bold">({{ branchDesenvolvimento || 'dev-06' }})</span>
-        </button>
+      <AppButton
+        v-if="selectedBranches.length === 1"
+        variant="primary"
+        size="md"
+        :icon="GitMerge"
+        :disabled="!selectedEnvironment"
+        @click="requestMerge"
+      >
+        Mesclar para o ambiente
+      </AppButton>
 
-        <!-- Botão HML -->
-        <button
-          @click="$emit('merge-to-target', branchHomologacao || 'hml', 'hml')"
-          class="px-5 py-2.5 rounded-[var(--app-input-radius)] border transition-all cursor-pointer flex flex-row items-center justify-center gap-2 shrink-0 bg-indigo-500/10 border-indigo-500/50 hover:border-indigo-500 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 shadow-sm"
-        >
-          <span class="text-[11px] font-black uppercase tracking-wider">Merge para HML</span>
-          <span class="text-[9px] opacity-80 font-mono font-bold">({{ branchHomologacao || 'hml' }})</span>
-        </button>
-      </template>
-
-      <!-- Botão Excluir -->
-      <template v-if="selectedBranches.length >= 1">
-        <button
-          @click="$emit('bulk-delete')"
-          class="px-5 py-2.5 rounded-[var(--app-input-radius)] border transition-all cursor-pointer flex flex-row items-center justify-center gap-2 shrink-0 bg-red-500/10 border-red-500/50 hover:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-500/20 shadow-sm"
-        >
-          <span class="text-[11px] font-black uppercase tracking-wider">Excluir</span>
-          <span class="text-[9px] font-bold">({{ selectedBranches.length }})</span>
-        </button>
-      </template>
+      <AppButton
+        v-if="selectedBranches.length >= 1"
+        variant="danger"
+        size="md"
+        @click="$emit('bulk-delete')"
+      >
+        Excluir ({{ selectedBranches.length }})
+      </AppButton>
     </div>
   </div>
 </template>
-

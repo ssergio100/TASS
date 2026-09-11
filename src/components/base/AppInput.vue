@@ -54,6 +54,11 @@ defineProps({
     type: String,
     default: 'text' // text, url, password, number, etc.
   },
+  size: {
+    type: String,
+    default: 'md',
+    validator: value => ['sm', 'md'].includes(value)
+  },
   labelColor: {
     type: String,
     default: 'text-slate-500 dark:text-slate-400' // Cor do texto do label
@@ -101,8 +106,9 @@ const emit = defineEmits(['update:modelValue']);
       :value="modelValue"
       @input="emit('update:modelValue', $event.target.value)"
       v-bind="$attrs"
-      class="app-input px-4 py-3 shadow-sm transition-all"
+      class="app-input shadow-sm transition-all"
       :class="[
+        size === 'sm' ? 'px-3 py-2 text-xs' : 'px-4 py-3',
         error ? 'border-red-500/50 ring-1 ring-red-500/20' : '',
         $attrs.class // Permite que o pai injete classes (ex: font-mono)
       ]"

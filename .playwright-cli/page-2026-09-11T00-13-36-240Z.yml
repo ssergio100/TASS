@@ -1,0 +1,304 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic:
+        - heading "Tass" [level=1]
+        - generic:
+          - generic: Copyright © 2026
+          - generic: Feito com ❤️
+    - main [ref=e5]:
+      - complementary [ref=e6]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: NOTAS RÁPIDAS
+            - button [ref=e14] [cursor=pointer]
+          - generic [ref=e18]: "1"
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - heading "Component Suite" [level=1] [ref=e27]
+            - paragraph [ref=e28]: Laboratório oficial de componentes base e Design System do TASS.
+          - generic [ref=e29]: Painel Interativo
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - heading "Entradas de Dados" [level=3] [ref=e37]
+              - paragraph [ref=e38]: Componentes AppInput e AppTextarea
+            - generic [ref=e39]:
+              - generic [ref=e40]:
+                - generic [ref=e41]: Campo de Texto Base
+                - textbox "Digite alguma coisa..." [ref=e47]: Texto de teste reativo
+              - generic [ref=e48]:
+                - generic [ref=e49]: Entrada compacta
+                - textbox "Variante para listas densas" [ref=e52]: Texto de teste reativo
+              - generic [ref=e53]:
+                - generic [ref=e54]: Campo de Texto Longo
+                - textbox "Escreva um texto longo..." [ref=e59]: Exemplo de conteúdo para o componente base AppTextarea.
+              - generic [ref=e60]:
+                - generic [ref=e61]: Model Value (Reativo)
+                - paragraph [ref=e62]:
+                  - strong [ref=e63]: "Input:"
+                  - text: "\"Texto de teste reativo\""
+                - paragraph [ref=e64]:
+                  - strong [ref=e65]: "Textarea:"
+                  - text: "\"Exemplo de conteúdo para o componente base AppTextarea.\""
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - heading "Seletores e Controles" [level=3] [ref=e68]
+              - paragraph [ref=e69]: Componentes AppSelect, AppRadio e AppSwitch
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - generic [ref=e72]: Seletor Dinâmico
+                - generic [ref=e74] [cursor=pointer]: Opção 2 - GitLab Integration
+              - generic [ref=e78]:
+                - generic [ref=e79]: Seletor compacto
+                - generic [ref=e81] [cursor=pointer]: Opção 2 - GitLab Integration
+              - generic [ref=e85]:
+                - generic [ref=e86]: Opções Únicas (Radio)
+                - generic [ref=e87]:
+                  - generic [ref=e88] [cursor=pointer]:
+                    - radio "Opção Alpha" [checked] [ref=e90]
+                    - generic [ref=e93]: Opção Alpha
+                  - generic [ref=e94] [cursor=pointer]:
+                    - radio "Opção Beta" [ref=e96]
+                    - generic [ref=e98]: Opção Beta
+              - generic [ref=e99]:
+                - generic [ref=e100] [cursor=pointer]:
+                  - generic [ref=e101]:
+                    - generic [ref=e102]: Interruptor Principal
+                    - generic [ref=e103]: Ativa ou desativa a simulação reativa.
+                  - checkbox "Interruptor Principal Ativa ou desativa a simulação reativa." [ref=e105]
+                - generic [ref=e108] [cursor=pointer]:
+                  - generic [ref=e109]:
+                    - generic [ref=e110]: Interruptor Secundário
+                    - generic [ref=e111]: Iniciado por padrão como ativo.
+                  - checkbox "Interruptor Secundário Iniciado por padrão como ativo." [checked] [ref=e113]
+              - generic [ref=e116]:
+                - generic [ref=e117]: Model Value (Reativo)
+                - paragraph [ref=e118]:
+                  - strong [ref=e119]: "Select:"
+                  - text: "\"op2\""
+                - paragraph [ref=e120]:
+                  - strong [ref=e121]: "Radio:"
+                  - text: "\"rad1\""
+                - paragraph [ref=e122]:
+                  - strong [ref=e123]: "Switches:"
+                  - text: "[false, true]"
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - heading "Badges e Status" [level=3] [ref=e126]
+              - paragraph [ref=e127]: Componentes AppBadge
+            - generic [ref=e128]:
+              - generic [ref=e129]:
+                - generic [ref=e130]: Variantes cromáticas (tamanho MD)
+                - generic [ref=e131]:
+                  - generic [ref=e132]: Indigo
+                  - generic [ref=e133]: Emerald
+                  - generic [ref=e134]: Amber
+                  - generic [ref=e135]: Red
+                  - generic [ref=e136]: Slate
+                  - generic [ref=e137]: Purple
+              - generic [ref=e138]:
+                - generic [ref=e139]: Indicadores com Dot Pulsante
+                - generic [ref=e140]:
+                  - generic [ref=e141]: Ativo
+                  - generic [ref=e143]: Pendente
+                  - generic [ref=e145]: Erro
+                  - generic [ref=e147]: Indeterminado
+              - generic [ref=e149]:
+                - generic [ref=e150]: Tamanhos disponíveis
+                - generic [ref=e151]:
+                  - generic [ref=e152]: Size XS
+                  - generic [ref=e153]: Size SM
+                  - generic [ref=e154]: Size MD
+          - generic [ref=e155]:
+            - generic [ref=e156]:
+              - heading "Visualização e Tempo" [level=3] [ref=e157]
+              - paragraph [ref=e158]: Componentes AppProgressBar, AppSkeleton e AppTimePicker
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - generic [ref=e162]:
+                  - generic [ref=e163]: Progresso de Teste
+                  - generic [ref=e164]: 45%
+                - generic [ref=e167]:
+                  - button "-5%" [ref=e168] [cursor=pointer]
+                  - button "+5%" [ref=e169] [cursor=pointer]
+              - generic [ref=e170]:
+                - generic [ref=e171]: Seletor de Hora (AppTimePicker)
+                - paragraph [ref=e172]: "Hora selecionada: 14:30"
+              - generic [ref=e173]: Animação Shimmer (AppSkeleton)
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - heading "Avatares" [level=3] [ref=e185]
+              - paragraph [ref=e186]: Componentes AppAvatar
+            - generic [ref=e187]:
+              - generic [ref=e188]:
+                - generic [ref=e189]: Tamanhos (com iniciais)
+                - generic [ref=e190]:
+                  - generic [ref=e191]:
+                    - generic [ref=e192]: SR
+                    - generic [ref=e194]: sm
+                  - generic [ref=e195]:
+                    - generic [ref=e196]: SR
+                    - generic [ref=e198]: md
+                  - generic [ref=e199]:
+                    - generic [ref=e200]: SR
+                    - generic [ref=e202]: lg
+                  - generic [ref=e203]:
+                    - generic [ref=e204]: SR
+                    - generic [ref=e206]: xl
+              - generic [ref=e207]:
+                - generic [ref=e208]: Com imagem (hover zoom)
+                - generic [ref=e209]:
+                  - img "Jane Doe" [ref=e211]
+                  - img "John Doe" [ref=e213]
+          - generic [ref=e214]:
+            - generic [ref=e215]:
+              - generic [ref=e216]:
+                - heading "Componente AppButton" [level=3] [ref=e217]
+                - paragraph [ref=e218]: Nosso componente base unificado para botões premium
+              - generic [ref=e219]:
+                - generic [ref=e220] [cursor=pointer]:
+                  - generic [ref=e221]: Loading
+                  - checkbox "Loading" [ref=e224]
+                - generic [ref=e228] [cursor=pointer]:
+                  - generic [ref=e229]: Disabled
+                  - checkbox "Disabled" [ref=e232]
+            - generic [ref=e235]:
+              - generic [ref=e236]:
+                - generic [ref=e237]: "Variant: Primary"
+                - button "Primary" [ref=e238] [cursor=pointer]
+              - generic [ref=e243]:
+                - generic [ref=e244]: "Variant: Secondary"
+                - button "Secondary" [ref=e245] [cursor=pointer]
+              - generic [ref=e249]:
+                - generic [ref=e250]: "Variant: Gradient"
+                - button "Gradient" [ref=e251] [cursor=pointer]
+              - generic [ref=e256]:
+                - generic [ref=e257]: "Variant: Outline"
+                - button "Outline" [ref=e258] [cursor=pointer]
+              - generic [ref=e263]:
+                - generic [ref=e264]: "Variant: Glass"
+                - button "Glass" [ref=e265] [cursor=pointer]
+              - generic [ref=e269]:
+                - generic [ref=e270]: "Variant: Ghost"
+                - button "Ghost" [ref=e271] [cursor=pointer]
+              - generic [ref=e278]:
+                - generic [ref=e279]: "Variant: Danger"
+                - button "Danger" [ref=e280] [cursor=pointer]
+              - generic [ref=e285]:
+                - generic [ref=e286]: "Variant: Success"
+                - button "Success" [ref=e287] [cursor=pointer]
+              - generic [ref=e293]:
+                - generic [ref=e294]: "Variant: Warning"
+                - button "Warning" [ref=e295] [cursor=pointer]
+            - generic [ref=e299]:
+              - generic [ref=e300]: Escalas Geométricas (Tamanhos)
+              - generic [ref=e301]:
+                - button "Size SM" [ref=e302] [cursor=pointer]
+                - button "Size MD" [ref=e304] [cursor=pointer]
+                - button "Size LG" [ref=e306] [cursor=pointer]
+                - button "Size XL" [ref=e308] [cursor=pointer]
+          - generic [ref=e310]:
+            - generic [ref=e311]:
+              - heading "Botões Globais (CSS)" [level=3] [ref=e312]
+              - paragraph [ref=e313]: Classes utilitárias prontas do style.css
+            - generic [ref=e314]:
+              - generic [ref=e315]:
+                - generic [ref=e316]: btn-primary
+                - button "Confirmar Ação" [ref=e317] [cursor=pointer]
+              - generic [ref=e318]:
+                - generic [ref=e319]: btn-secondary
+                - button "Cancelar Operação" [ref=e320] [cursor=pointer]
+              - generic [ref=e321]:
+                - generic [ref=e322]: btn-gradient
+                - button "Enviar Arquivos" [ref=e323] [cursor=pointer]
+              - generic [ref=e324]:
+                - generic [ref=e325]: btn-outline
+                - button "Visualizar Código" [ref=e326] [cursor=pointer]
+              - generic [ref=e327]:
+                - generic [ref=e328]: btn-glass
+                - button "Configurar Painel" [ref=e329] [cursor=pointer]
+              - generic [ref=e330]:
+                - generic [ref=e331]: btn-danger
+                - button "Excluir Tudo" [ref=e332] [cursor=pointer]
+              - generic [ref=e333]:
+                - generic [ref=e334]: btn-success
+                - button "Salvar Cadastro" [ref=e335] [cursor=pointer]
+              - generic [ref=e336]:
+                - generic [ref=e337]: btn-warning
+                - button "Atenção Crítica" [ref=e338] [cursor=pointer]
+              - generic [ref=e339]:
+                - generic [ref=e340]: btn-ghost
+                - button "Voltar Menu" [ref=e341] [cursor=pointer]
+          - generic [ref=e342]:
+            - generic [ref=e343]:
+              - heading "Glass Card (Uiverse)" [level=3] [ref=e344]
+              - paragraph [ref=e345]: Teste do componente AppGlassCard com efeito de transparência
+            - generic [ref=e346]: Github
+          - generic [ref=e352]:
+            - generic [ref=e353]:
+              - heading "Color Palette (Uiverse)" [level=3] [ref=e354]
+              - paragraph [ref=e355]: Componente interativo de paleta de cores
+            - generic [ref=e357]:
+              - generic [ref=e358]:
+                - generic [ref=e359] [cursor=pointer]: "264653"
+                - generic [ref=e361] [cursor=pointer]: 2A9D8F
+                - generic [ref=e363] [cursor=pointer]: E9C46A
+                - generic [ref=e365] [cursor=pointer]: F4A261
+                - generic [ref=e367] [cursor=pointer]: E76F51
+              - generic [ref=e369]: Selecione uma cor
+          - generic [ref=e371]:
+            - generic [ref=e372]:
+              - heading "Editor de Ambientes Git" [level=3] [ref=e373]
+              - paragraph [ref=e374]: Componente de domínio usado na Integração Remota
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - generic [ref=e377]:
+                  - heading "Ambientes e aliases" [level=4] [ref=e378]
+                  - paragraph [ref=e383]: Branch, alias e origem padrão das novas branches.
+                - button "Adicionar ambiente" [ref=e384] [cursor=pointer]
+              - generic [ref=e387]:
+                - generic [ref=e388]:
+                  - generic [ref=e389]: Branch
+                  - generic [ref=e390]: Alias
+                  - generic [ref=e391]: Base
+                - generic [ref=e392]:
+                  - generic [ref=e393]:
+                    - button "Reordenar ambiente" [ref=e394]
+                    - textbox "integration/client-a" [ref=e404]: stable
+                    - textbox "Integração Cliente A" [ref=e407]: Produção
+                    - generic [ref=e408]:
+                      - radio "Usar Produção como branch base" [checked] [ref=e411]
+                      - generic [ref=e414]: Base
+                    - button "Escolha outra base antes de remover" [disabled] [ref=e417]
+                  - generic [ref=e421]:
+                    - button "Reordenar ambiente" [ref=e422]
+                    - textbox "integration/client-a" [ref=e432]: integration
+                    - textbox "Integração Cliente A" [ref=e435]: Integração
+                    - radio "Usar Integração como branch base" [ref=e439]
+                    - button "Remover cadastro do ambiente" [ref=e441] [cursor=pointer]
+  - complementary [ref=e445]:
+    - generic [ref=e446]:
+      - generic [ref=e451]:
+        - heading "Rádio TASS" [level=2] [ref=e452]
+        - paragraph [ref=e453]: Seu player embutido
+      - button [ref=e454] [cursor=pointer]
+    - generic [ref=e458]:
+      - generic [ref=e459]:
+        - generic [ref=e460]: Pausado
+        - heading "Nenhuma rádio selecionada" [level=3] [ref=e461]
+      - generic [ref=e462]:
+        - button [ref=e463] [cursor=pointer]
+        - button [ref=e466] [cursor=pointer]
+        - button [ref=e469] [cursor=pointer]
+      - generic [ref=e472]:
+        - button [ref=e473] [cursor=pointer]
+        - slider [ref=e478]: "0.5"
+        - generic [ref=e479]: 50%
+    - generic [ref=e481]:
+      - heading "Estações" [level=4] [ref=e482]
+      - generic [ref=e483]: "0"
+    - generic [ref=e484]:
+      - button "Adicionar Rádio" [ref=e485] [cursor=pointer]
+      - generic "Importar Lista JSON" [ref=e487] [cursor=pointer]

@@ -1,0 +1,90 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic:
+      - generic:
+        - heading "Tass" [level=1]
+        - generic:
+          - generic: Copyright © 2026
+          - generic: Feito com ❤️
+    - main [ref=e5]:
+      - complementary [ref=e6]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]: NOTAS RÁPIDAS
+            - button [ref=e14] [cursor=pointer]
+          - generic [ref=e18]: "1"
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - button [ref=e35] [cursor=pointer]
+      - generic [ref=e37]: "Sprint: 0h 0m • Hoje: 0h 0m"
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - button "Todas" [ref=e44] [cursor=pointer]
+        - button "Ativas" [ref=e45] [cursor=pointer]
+        - button "Feitas" [ref=e46] [cursor=pointer]
+      - generic [ref=e49]:
+        - button [ref=e50] [cursor=pointer]
+        - button [ref=e53] [cursor=pointer]
+        - button [ref=e57] [cursor=pointer]
+        - button [ref=e60] [cursor=pointer]
+        - button [ref=e64] [cursor=pointer]
+        - button [ref=e71] [cursor=pointer]
+  - generic [ref=e218]:
+    - generic [ref=e219]:
+      - generic [ref=e226]:
+        - heading "Breeze Git Rebuilder" [level=2] [ref=e227]
+        - paragraph [ref=e228]: Isolador e Simulador de Integrações e Ambientes
+      - generic [ref=e229]:
+        - button [ref=e230] [cursor=pointer]
+        - button [ref=e236] [cursor=pointer]
+    - generic [ref=e240]:
+      - complementary [ref=e241]:
+        - navigation [ref=e242]:
+          - button "Mesclar e Excluir" [ref=e243] [cursor=pointer]
+          - button "Limpar e Recriar" [ref=e249] [cursor=pointer]
+        - generic [ref=e260]:
+          - strong [ref=e261]: "Atenção Crítica:"
+          - text: As ações deste módulo interagem diretamente com o GitLab. Operações de exclusão e mesclagem são irreversíveis.
+      - main [ref=e262]:
+        - generic [ref=e265]:
+          - button "Listar branches" [ref=e267] [cursor=pointer]
+          - generic [ref=e274]:
+            - generic [ref=e276]:
+              - generic [ref=e277]:
+                - textbox "Buscar branch..." [disabled] [ref=e279]
+                - button "Mais recente" [disabled] [ref=e280]
+              - generic [ref=e285]: Clique em "Listar branches" no controle central para carregar as branches de feature.
+            - generic [ref=e293]:
+              - generic [ref=e294]: Liste as branches, selecione uma origem e escolha o ambiente de destino.
+              - generic [ref=e296]:
+                - generic [ref=e297]: Console
+                - generic [ref=e300]:
+                  - generic [ref=e301]: "Texto:"
+                  - generic [ref=e302]:
+                    - button "-" [ref=e303] [cursor=pointer]
+                    - generic [ref=e304]: 11px
+                    - button "+" [ref=e305] [cursor=pointer]
+  - complementary [ref=e75]:
+    - generic [ref=e76]:
+      - generic [ref=e81]:
+        - heading "Rádio TASS" [level=2] [ref=e82]
+        - paragraph [ref=e83]: Seu player embutido
+      - button [ref=e84] [cursor=pointer]
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - generic [ref=e90]: Pausado
+        - heading "Nenhuma rádio selecionada" [level=3] [ref=e91]
+      - generic [ref=e92]:
+        - button [ref=e93] [cursor=pointer]
+        - button [ref=e96] [cursor=pointer]
+        - button [ref=e99] [cursor=pointer]
+      - generic [ref=e102]:
+        - button [ref=e103] [cursor=pointer]
+        - slider [ref=e108]: "0.5"
+        - generic [ref=e109]: 50%
+    - generic [ref=e111]:
+      - heading "Estações" [level=4] [ref=e112]
+      - generic [ref=e113]: "0"
+    - generic [ref=e114]:
+      - button "Adicionar Rádio" [ref=e115] [cursor=pointer]
+      - generic "Importar Lista JSON" [ref=e117] [cursor=pointer]

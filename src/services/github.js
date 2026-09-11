@@ -94,10 +94,14 @@ export const githubService = {
   async createBranch(task, settings) {
     const { githubOwner, githubRepo, githubToken, activeBaseBranch } = settings;
     const branchName = this.getBranchName(task);
-    const baseBranch = activeBaseBranch || 'develop';
+    const baseBranch = activeBaseBranch;
     
     if (!githubToken || !githubOwner || !githubRepo) {
       notificationService.toast("Configuração incompleta: Preencha o Token, Owner e Repo do GitHub.", "error");
+      return;
+    }
+    if (!baseBranch) {
+      notificationService.toast('Configuração incompleta: selecione uma branch base.', 'error');
       return;
     }
 
@@ -164,6 +168,12 @@ export const githubService = {
     if (result === 'confirmed') {
       window.open(treeUrl, '_blank');
     } else if (result === 'denied') {
+      const isEnvironment = settings.activeEnvironments?.some(environment => environment.branch === branchName);
+      if (isEnvironment) {
+        notificationService.alert('Acesso negado', 'Branches de ambiente não podem ser excluídas por esta ação.', 'warning');
+        return treeUrl;
+      }
+
       const confirmed = await notificationService.confirm(
         'Alerta de Exclusão',
         `Deseja realmente DELETAR a branch '${branchName}'?`,
@@ -191,7 +201,7 @@ export const githubService = {
     return treeUrl;
   },
 
-  async analyzeAndMerge(task, settings, targetBranch = 'dev-06') {
+  async analyzeAndMerge(task, settings, targetBranch) {
     const { githubOwner, githubRepo, githubToken } = settings;
     
     let sourceBranch = this.getBranchName(task);
@@ -201,6 +211,10 @@ export const githubService = {
 
     if (!githubToken || !githubOwner || !githubRepo) {
       notificationService.toast("Configuração incompleta: Preencha o Token, Owner e Repo.", "error");
+      return;
+    }
+    if (!targetBranch) {
+      notificationService.toast('Selecione um ambiente de destino para o merge.', 'error');
       return;
     }
 
